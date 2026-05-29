@@ -10,7 +10,7 @@
 | Setting | Models (paper) | AdvSM | Attack | Eval |
 |--------|----------------|-------|--------|------|
 | **Classification** | 8 ImageNet classifiers | `scripts/classification/compute_advsm.py` | `scripts/classification/attack_pgd.py` | `scripts/classification/eval_accuracy.py` |
-| **Purification** | 9 purifiers + ResNet-50 | `scripts/purification/compute_advsm.py` | `scripts/purification/attack_pgd_transfer.py` | `scripts/purification/eval_accuracy.py` |
+| **Purification** | 9 purifiers + ResNet-50 (AdvSM: 8, excl. MimicDiffusion) | `scripts/purification/compute_advsm.py` | `scripts/purification/attack_pgd_transfer.py` | `scripts/purification/eval_accuracy.py` |
 | **LVLM / VQA** | CLIP / FARE / TeCoA / SimCLIP + LLaVA-v1.5-7B | `scripts/vlm/compute_advsm.py` | `scripts/vlm/attack_pgd_transfer.py` | `scripts/vlm/eval_vqa.py` |
 
 Configs: `configs/classifiers.yaml`, `configs/vlm_models.yaml` (`clip`, `fare`, `tecoa`, `simclip`).
@@ -58,12 +58,19 @@ mv data/imagenet/imagenet/*.png data/imagenet/ && rm -R data/imagenet/imagenet
 
 **Models** ResNet-50, ConvNeXt-B, ViT-B, Swin-B + four RobustBench robust counterparts (`configs/classifiers.yaml`).
 
-**AdvSM:** gradient threshold 10⁻⁵, 100 samples:
+**AdvSM:** gradient threshold 10⁻⁵, 100 samples (all **8** classifiers → 8×8 similarity):
 
 ```bash
 python scripts/classification/compute_advsm.py \
   --data imagenet \
-  --model "ResNet-50" --model "ResNet-50 (Robust)" \
+  --model "ResNet-50" \
+  --model "ConvNeXt-B" \
+  --model "ViT-B" \
+  --model "Swin-B" \
+  --model "ResNet-50 (Robust)" \
+  --model "ConvNeXt-B (Robust)" \
+  --model "ViT-B (Robust)" \
+  --model "Swin-B (Robust)" \
   --input data/imagenet --out_dir outputs/advsm/classifiers \
   --start_idx 0 --end_idx 100
 ```
@@ -114,14 +121,20 @@ bash scripts/download_guided_diffusion.sh
 | DCDefense | `timesteps=150`, `forward_noise_steps=1`, `strength_l=0.2`, `strength_s=0.1` |
 | DDIM (surrogate) | `timesteps=150`, `denoise_steps=3` |
 
-**AdvSM:** random-sign probes, ε = 16/255, response threshold θ = 2/255, M = 5, N = 10 (defaults in `compute_advsm.py`), 100 samples:
+**AdvSM:** random-sign probes, ε = 16/255, response threshold θ = 2/255, M = 5, N = 10 (defaults in `compute_advsm.py`), 100 samples (all **8** paper purifiers except MimicDiffusion → 8×8 similarity):
 
 ```bash
 python scripts/purification/compute_advsm.py \
   --input data/imagenet \
   --start_idx 0 --end_idx 100 \
+  --def "Mean kernel=5" \
+  --def "Gaussian kernel=5 sigma_y=0.015 sigma_k=1.5" \
+  --def "JPEG quality=20" \
   --def "DiffPure data=imagenet timesteps=150" \
   --def "DDIM data=imagenet timesteps=150 denoise_steps=3" \
+  --def "ContrastDiff data=imagenet timesteps=150 sample_step=1" \
+  --def "SSNI data=imagenet timesteps=150 denoise_steps=150" \
+  --def "DCDefense data=imagenet timesteps=150 forward_noise_steps=1 strength_l=0.2 strength_s=0.1" \
   --eps 16 --thres 2 --M 5 --N 10 \
   --out_dir outputs/advsm/purifiers
 ```
@@ -168,7 +181,7 @@ bash scripts/vlm/download_and_prepare_vqav2.sh
 
 **Models:** LLaVA-1.5-7B + shared projector; **encoders** CLIP ViT-L/14 (non-robust) and FARE / TeCoA / SimCLIP (robust). **PGDTransfer:** ε = 4/255, α = 1/255, T = 100, untargeted.
 
-**AdvSM:** threshold 10⁻⁵, 100 samples (`--end-idx 100`):
+**AdvSM:** threshold 10⁻⁵, 100 samples (`--end-idx 100`; all **4** encoders → 4×4 similarity):
 
 ```bash
 python scripts/vlm/compute_advsm.py \
