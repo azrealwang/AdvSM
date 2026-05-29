@@ -234,3 +234,20 @@ def smart_cast(val):
         except ValueError:
             continue
     return val  # fallback to string
+
+
+def parse_d_settings_arg(d_settings) -> dict:
+    """Parse ``--d_settings`` tokens from argparse ``nargs='+'`` + ``action='append'``."""
+    if not d_settings:
+        return {}
+    flat = []
+    for group in d_settings:
+        if isinstance(group, (list, tuple)):
+            flat.extend(group)
+        else:
+            flat.append(group)
+    if len(flat) % 2 != 0:
+        raise ValueError(
+            f"--d_settings must be name/value pairs, got {len(flat)} tokens: {flat!r}"
+        )
+    return {flat[i]: smart_cast(flat[i + 1]) for i in range(0, len(flat), 2)}

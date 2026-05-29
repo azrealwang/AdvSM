@@ -17,7 +17,7 @@ import argparse
 import torch
 from torch import Tensor
 
-from advsm.classification.utils import load_one_model, load_samples, predict, smart_cast
+from advsm.classification.utils import load_one_model, load_samples, parse_d_settings_arg, predict
 from advsm.purification import Purifier
 
 
@@ -32,10 +32,9 @@ def parse_args():
     p.add_argument(
         "--d_settings",
         nargs="+",
-        action="append",
-        metavar=("NAME", "VAL"),
         default=None,
-        help="Purifier kwargs as name value pairs, e.g. data imagenet timesteps 150 denoise_steps 10",
+        metavar="KV",
+        help="Purifier kwargs as name value pairs, e.g. data imagenet timesteps 150 denoise_steps 3",
     )
     p.add_argument("--start_idx", type=int, default=0)
     p.add_argument("--end_idx", type=int, default=500)
@@ -46,7 +45,7 @@ def parse_args():
 
 def main() -> None:
     args = parse_args()
-    d_settings = {k: smart_cast(v) for k, v in args.d_settings} if args.d_settings else {}
+    d_settings = parse_d_settings_arg(args.d_settings)
 
     target = load_one_model(args.data, args.target, threat_model="Linf").eval()
     x_test, y_test = load_samples(args.input, args.start_idx, args.end_idx)

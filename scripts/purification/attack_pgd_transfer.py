@@ -18,7 +18,13 @@ from time import time
 import torch
 from torch import Tensor
 
-from advsm.classification.utils import load_one_model, load_samples, predict, save_all_images, smart_cast
+from advsm.classification.utils import (
+    load_one_model,
+    load_samples,
+    parse_d_settings_arg,
+    predict,
+    save_all_images,
+)
 from advsm.purification import Purifier
 from advsm.purification.attacks import (
     DiffAttackBaseline,
@@ -55,12 +61,13 @@ def parse_args_and_config():
     parser.add_argument("--t_interval", type=int, default=None, help="DiffAttack proposal interval")
     parser.add_argument("--targeted", action="store_true")
     parser.add_argument("--defense", type=str, default=None)
-    parser.add_argument("--d_settings", nargs="+", action="append", metavar=("NAME", "VAL"), default=None)
-    parser.add_argument("--mask", action="store_true")
-    parser.add_argument("--m_eps", type=int, default=16)
-    parser.add_argument("--m_thres", type=float, default=2)
-    parser.add_argument("--M", type=int, default=5)
-    parser.add_argument("--N", type=int, default=10)
+    parser.add_argument(
+        "--d_settings",
+        nargs="+",
+        default=None,
+        metavar="KV",
+        help="Purifier kwargs as name value pairs, e.g. data imagenet timesteps 150 denoise_steps 3",
+    )
     parser.add_argument("--data", type=str, required=True, choices=("cifar10", "imagenet"))
     parser.add_argument("--target", type=str, required=True, help="Classifier behind purifier (RobustBench id or paper name)")
     parser.add_argument("--input", type=str, required=True)
@@ -137,9 +144,8 @@ def build_attack(args, target, purifier, eps):
 
 def main() -> None:
     args = parse_args_and_config()
-    print(args)
     eps = args.eps / 255 if args.norm == "Linf" else args.eps
-    d_settings = {k: smart_cast(v) for k, v in args.d_settings} if args.d_settings else {}
+    d_settings = parse_d_settings_arg(args.d_settings)
 
     target = load_one_model(args.data, args.target, threat_model="Linf").eval()
     x_test, y_test = load_samples(args.input, args.start_idx, args.end_idx)
@@ -174,20 +180,7 @@ def main() -> None:
     for start in range(0, len(y_test), batch_size):
         end = min(start + batch_size, len(y_test))
         idx = slice(start, end)
-        mask = None
-        if args.mask:
-            from advsm.purification.mask import build_masks
-
-            masks = build_masks(
-                x_test[idx],
-                purifier=purifier,
-                eps=args.m_eps / 255,
-                thres=args.m_thres / 255,
-                M=args.M,
-                N=args.N,
-            )
-            mask = ~masks["smooth"]
-        x_adv = attack.perturb(x=x_test[idx], y=eval_labels[idx], mask=mask).detach().cpu()
+        x_adv = attack.perturb(x=x_test[idx], y=eval_labels[idx]).detach().cpu()
         save_all_images(x_adv, eval_labels[idx], args.output, args.start_idx + start)
     print(f"Attack time: {time() - t0:.1f}s")
 
