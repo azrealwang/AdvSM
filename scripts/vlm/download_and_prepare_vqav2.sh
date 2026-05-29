@@ -2,11 +2,11 @@
 # Download VQAv2 val (questions + annotations) and COCO val2014 images, then build jsonl for clean eval / attacks.
 #
 # Usage (from repo root):
-#   bash scripts/download_and_prepare_vqav2.sh
-#   bash scripts/download_and_prepare_vqav2.sh --data-root /path/to/data
-#   bash scripts/download_and_prepare_vqav2.sh --max-samples 5000
-#   bash scripts/download_and_prepare_vqav2.sh --skip-coco      # only VQA zips + jsonl (images already there)
-#   bash scripts/download_and_prepare_vqav2.sh --skip-download # only run convert (zips already extracted)
+#   bash scripts/vlm/download_and_prepare_vqav2.sh
+#   bash scripts/vlm/download_and_prepare_vqav2.sh --data-root /path/to/data
+#   bash scripts/vlm/download_and_prepare_vqav2.sh --max-samples 5000
+#   bash scripts/vlm/download_and_prepare_vqav2.sh --skip-coco      # only VQA zips + jsonl (images already there)
+#   bash scripts/vlm/download_and_prepare_vqav2.sh --skip-download # only run convert (zips already extracted)
 #
 # Disk: COCO val2014 ~6GB + VQA zips small. Requires: curl or wget, unzip, python3.
 #
@@ -31,7 +31,7 @@ while [[ $# -gt 0 ]]; do
     --skip-coco) SKIP_COCO=1; shift ;;
     --skip-download) SKIP_DOWNLOAD=1; shift ;;
     -h|--help)
-      echo "Usage: bash scripts/download_and_prepare_vqav2.sh [--data-root DIR] [--max-samples N] [--skip-coco] [--skip-download]"
+      echo "Usage: bash scripts/vlm/download_and_prepare_vqav2.sh [--data-root DIR] [--max-samples N] [--skip-coco] [--skip-download]"
       exit 0
       ;;
     *) echo "Unknown option: $1"; exit 1 ;;
@@ -41,9 +41,9 @@ done
 DL="${DATA_ROOT}/_downloads"
 VQA_RAW="${DATA_ROOT}/vqa/raw"
 COCO_IMG="${DATA_ROOT}/coco/val2014"
-OUT_JSONL="${DATA_ROOT}/vqav2_val.jsonl"
+OUT_JSONL="${DATA_ROOT}/vqa/vqav2_val.jsonl"
 
-mkdir -p "${DL}" "${VQA_RAW}" "${COCO_IMG}"
+mkdir -p "${DL}" "${VQA_RAW}" "${COCO_IMG}" "$(dirname "${OUT_JSONL}")"
 
 download() {
   local url="$1" out="$2"
@@ -108,7 +108,7 @@ fi
 echo "Questions: ${QUEST_JSON}"
 echo "Annotations: ${ANN_JSON}"
 
-CONV=(python3 scripts/convert_vqav2.py
+CONV=(python3 scripts/vlm/convert_vqav2.py
   --questions-json "${QUEST_JSON}"
   --annotations-json "${ANN_JSON}"
   --output-jsonl "${OUT_JSONL}"
@@ -131,6 +131,7 @@ echo "    --models clip fare \\"
 echo "    --models-config configs/vlm_models.yaml \\"
 echo "    --data-jsonl ${OUT_JSONL} \\"
 echo "    --image-root ${COCO_IMG} \\"
+echo "    --subset-file ${DATA_ROOT}/vqa/all_correct.ids \\"
 echo "    --output outputs/clean_results.csv \\"
 echo "    --batch-size 1"
 echo ""
@@ -139,5 +140,6 @@ echo "    --source fare \\"
 echo "    --models-config configs/vlm_models.yaml \\"
 echo "    --data-jsonl ${OUT_JSONL} \\"
 echo "    --image-root ${COCO_IMG} \\"
+echo "    --subset-file ${DATA_ROOT}/vqa/all_correct.ids \\"
 echo "    --output-dir outputs/attacks/vlm_fare_eps4 \\"
 echo "    --batch-size 1"

@@ -20,8 +20,9 @@ Example:
   python scripts/vqa_model_gradient_similarity.py \\
     --models clip fare tecoa simclip \\
     --models-config configs/robust_vqa_models.yaml \\
-    --data-jsonl data/vqav2_val.jsonl \\
+    --data-jsonl data/vqa/vqav2_val.jsonl \\
     --image-root data/coco/val2014 \\
+    --subset-file data/vqa/all_correct.ids \\
     --out-dir outputs/sim \\
     --start-idx 0 --end-idx 64 \\
     --batch-size 1 \\
