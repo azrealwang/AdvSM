@@ -45,7 +45,7 @@ checkpoints/
 └── guided_diffusion/imagenet/256x256_diffusion_uncond.pt
 ```
 
-Robust classifiers load via [RobustBench](https://github.com/RobustBench/robustbench) on first use.
+Robust classifiers load via [RobustBench](https://github.com/RobustBench/robustbench) (`git+https://github.com/RobustBench/robustbench.git` in `requirements.txt`) on first use.
 
 ## Classification
 

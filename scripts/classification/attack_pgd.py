@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Untargeted Linf PGD on paper ImageNet classifiers (Table 1)."""
+"""Untargeted Linf PGD on paper ImageNet classifiers."""
 import os
 import sys
 
@@ -15,16 +15,11 @@ ensure_third_party_on_path()
 import argparse
 from time import time
 
-import numpy as np
 import torch
-import torch.nn as nn
-from torch import Tensor
 
 from advsm.classification.models import _PAPER_MODEL_KEYS, load_classifier
 from advsm.classification.utils import load_samples, save_all_images
-
-from art.attacks.evasion import ProjectedGradientDescentPyTorch
-from art.estimators.classification import PyTorchClassifier
+from advsm.purification.attacks import PGDTransfer
 
 
 def parse_args():
@@ -37,41 +32,42 @@ def parse_args():
     p.add_argument("--output", type=str, required=True)
     p.add_argument("--start_idx", type=int, default=0)
     p.add_argument("--end_idx", type=int, default=500)
+    p.add_argument("--seed", type=int, default=None)
     return p.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     eps = args.eps / 255.0
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = load_classifier(args.model)
-    classifier = PyTorchClassifier(
+    attack = PGDTransfer(
         model=model,
-        clip_values=(0, 1),
-        loss=nn.CrossEntropyLoss(),
-        input_shape=(3, 224, 224),
-        nb_classes=1000,
+        targeted=False,
+        n_iter=args.max_iter,
+        norm="Linf",
+        eps=eps,
+        eot_iter=1,
+        eot_mode="iter",
+        bpda_mode="skip",
+        device=device,
+        seed=args.seed,
     )
 
     x_test, y_test = load_samples(args.input, args.start_idx, args.end_idx)
-    y_test = y_test.astype(np.int64)
-
-    attack = ProjectedGradientDescentPyTorch(
-        estimator=classifier,
-        eps=eps,
-        max_iter=args.max_iter,
-        targeted=False,
-        batch_size=args.batch_size,
-    )
+    x_test = torch.from_numpy(x_test).float()
+    y_test = torch.from_numpy(y_test).long()
 
     os.makedirs(args.output, exist_ok=True)
     t0 = time()
-    for i in range(len(y_test)):
-        x = x_test[[i]]
-        y = y_test[[i]]
-        x_adv = attack.generate(x=x, y=y)
-        save_all_images(Tensor(x_adv), Tensor(y), args.output, args.start_idx + i)
-    print(f"Saved {len(y_test)} adversarial images to {args.output} in {time() - t0:.1f}s")
+    n = len(y_test)
+    bs = max(1, args.batch_size)
+    for start in range(0, n, bs):
+        end = min(start + bs, n)
+        x_adv = attack.perturb(x_test[start:end], y_test[start:end])
+        save_all_images(x_adv.cpu(), y_test[start:end], args.output, args.start_idx + start)
+    print(f"Saved {n} adversarial images to {args.output} in {time() - t0:.1f}s")
 
 
 if __name__ == "__main__":

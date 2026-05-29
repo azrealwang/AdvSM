@@ -9,7 +9,7 @@ matplotlib
 opencv-python
 
 # Classification (RobustBench + paper classifiers)
-robustbench
+robustbench @ git+https://github.com/RobustBench/robustbench.git
 timm
 
 # VLM (LLaVA-based LVLM pipelines)
