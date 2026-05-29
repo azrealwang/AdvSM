@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PGDTransfer: image-space PGD on LVLM VQA (paper §6.5). Only attack shipped for VQA."""
+"""PGDTransfer: image-space PGD on LVLM VQA pipelines."""
 from __future__ import annotations
 
 import argparse
@@ -42,7 +42,7 @@ def parse_args():
     p.add_argument("--output-dir", required=True)
     p.add_argument("--eps", type=parse_frac, default=4 / 255, help="Linf ε (default 4/255)")
     p.add_argument("--alpha", type=parse_frac, default=1 / 255)
-    p.add_argument("--steps", type=int, default=100, help="PGD iterations (paper Table 6, VQA: T=100)")
+    p.add_argument("--steps", type=int, default=100, help="PGD iterations (default 100)")
     p.add_argument("--batch-size", type=int, default=1)
     p.add_argument("--attack-clean-correct-only", action="store_true")
     p.add_argument(

@@ -9,17 +9,16 @@ g = ∂ NLL / ∂ image (raw, not L2-normalized). Per pixel/channel:
   |g| > threshold, g > 0  -> label 1  (white)
   |g| > threshold, g < 0  -> label -1 (black)
 
-Cross-model similarity is **cosine on flattened label maps** in [-1, 0, 1], averaged over the eval slice
-(same logic as ``aml_label/model_gradient_sensitivity_similarity.py``).
+Cross-model similarity is **cosine on flattened label maps** in [-1, 0, 1], averaged over the eval slice.
 
 Models are loaded **one at a time**; by default each model's label maps are cached on CPU.
-Use ``--reload-model-each-batch`` for the legacy per-batch reload, or if the cache would exceed
+Use ``--reload-model-each-batch`` to reload every model on every batch, or if the cache would exceed
 ``--grad-cache-max-gb``.
 
 Example:
-  python scripts/vqa_model_gradient_similarity.py \\
+  python scripts/vlm/compute_advsm.py \\
     --models clip fare tecoa simclip \\
-    --models-config configs/robust_vqa_models.yaml \\
+    --models-config configs/vlm_models.yaml \\
     --data-jsonl data/vqa/vqav2_val.jsonl \\
     --image-root data/coco/val2014 \\
     --subset-file data/vqa/all_correct.ids \\
@@ -258,7 +257,7 @@ def parse_args():
         "--threshold",
         type=float,
         default=1e-5,
-        help="|g| <= threshold -> label 0; else sign(g) -> +/-1 (same as aml_label grad sensitivity).",
+        help="|g| <= threshold -> label 0; else sign(g) -> +/-1.",
     )
     p.add_argument("--out-dir", type=str, required=True)
     p.add_argument("--prefix", type=str, default="vqa_grad_sim")

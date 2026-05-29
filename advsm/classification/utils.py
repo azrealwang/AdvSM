@@ -27,7 +27,7 @@ class NormalizeWrapper(torch.nn.Module):
         return self.model(x)
 
 def load_one_model(dataset: str, name: str, threat_model: str = "Linf") -> torch.nn.Module:
-    """Load a classifier by paper name (ImageNet) or RobustBench id (legacy)."""
+    """Load a classifier by config name (ImageNet) or RobustBench id."""
     if dataset == "imagenet":
         try:
             return load_classifier(name)

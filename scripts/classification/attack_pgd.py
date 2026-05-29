@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Untargeted Linf PGD on paper ImageNet classifiers."""
+"""Untargeted Linf PGD on ImageNet classifiers from configs/classifiers.yaml."""
 import os
 import sys
 
@@ -18,14 +18,14 @@ from time import time
 import torch
 from tqdm import tqdm
 
-from advsm.classification.models import _PAPER_MODEL_KEYS, load_classifier
+from advsm.classification.models import _CLASSIFIER_MODEL_KEYS, load_classifier
 from advsm.classification.utils import load_samples, save_all_images
 from advsm.purification.attacks import PGDTransfer
 
 
 def parse_args():
     p = argparse.ArgumentParser(description="PGD attack on ImageNet classifiers.")
-    p.add_argument("--model", type=str, required=True, choices=_PAPER_MODEL_KEYS)
+    p.add_argument("--model", type=str, required=True, choices=_CLASSIFIER_MODEL_KEYS)
     p.add_argument("--eps", type=float, default=4, help="Linf budget ε in 1/255 units (default 4 → 4/255)")
     p.add_argument("--max_iter", type=int, default=10, help="PGD iterations (default 10)")
     p.add_argument("--batch_size", type=int, default=1)

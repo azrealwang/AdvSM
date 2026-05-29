@@ -45,6 +45,6 @@ kwargs = {"token": token} if token else {"token": False}
 snapshot_download(repo_id=repo_id, local_dir=out, **kwargs)
 PY
 
-echo "Done. configs/robust_vqa_models.yaml should use:"
+echo "Done. configs/vlm_models.yaml should use:"
 echo "  llava.model_path: checkpoints/llava-v1.5-7b"
 echo "  (absolute: ${OUT}/)"

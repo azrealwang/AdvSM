@@ -113,7 +113,7 @@ class DiffHammerEM:
         # Use PGD class with EM=True: same base perturb() with EM path, native PGD update.
         # Original DiffHammer EM uses N_EOT=1 (attack step = single gradient from EM) and
         # N_EVAL = number of candidate gradients for EM to select/refine. So eot_iter sets
-        # N_EVAL only; N_EOT is fixed to 1 to match the paper/repo.
+        # N_EVAL only; N_EOT is fixed to 1 to match DiffHammer EM defaults.
         attack_cfg = {
             "RESUME": False,
             "METHOD": "pgd",

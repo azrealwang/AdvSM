@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Adaptive attacks on purification pipelines (paper Table 4 / 11)."""
+"""Adaptive PGDTransfer attacks on purification pipelines."""
 import os
 import sys
 
@@ -70,7 +70,7 @@ def parse_args_and_config():
         help="Purifier kwargs as name value pairs, e.g. data imagenet timesteps 150 denoise_steps 3",
     )
     parser.add_argument("--data", type=str, required=True, choices=("cifar10", "imagenet"))
-    parser.add_argument("--target", type=str, required=True, help="Classifier behind purifier (RobustBench id or paper name)")
+    parser.add_argument("--target", type=str, required=True, help="Classifier behind purifier (RobustBench id or config name)")
     parser.add_argument("--input", type=str, required=True)
     parser.add_argument("--output", type=str, required=True)
     parser.add_argument("--start_idx", type=int, default=0)

@@ -62,7 +62,7 @@ def get_sde_loss_fn(sde, train, reduce_mean=True, continuous=True, likelihood_we
     continuous: `True` indicates that the model is defined to take continuous time steps. Otherwise it requires
       ad-hoc interpolation to take continuous time steps.
     likelihood_weighting: If `True`, weight the mixture of score matching losses
-      according to https://arxiv.org/abs/2101.09258; otherwise use the weighting recommended in our paper.
+      according to https://arxiv.org/abs/2101.09258; otherwise use the default Score SDE weighting.
     eps: A `float` number. The smallest time step to sample from.
 
   Returns:
@@ -157,7 +157,7 @@ def get_step_fn(sde, train, optimize_fn=None, reduce_mean=False, continuous=True
     reduce_mean: If `True`, average the loss across data dimensions. Otherwise sum the loss across data dimensions.
     continuous: `True` indicates that the model is defined to take continuous time steps.
     likelihood_weighting: If `True`, weight the mixture of score matching losses according to
-      https://arxiv.org/abs/2101.09258; otherwise use the weighting recommended by our paper.
+      https://arxiv.org/abs/2101.09258; otherwise use the default Score SDE weighting.
 
   Returns:
     A one-step function for training or evaluation.

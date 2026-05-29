@@ -7,8 +7,8 @@ import torch.nn.functional as F
 from torch import Tensor
 from PIL import Image
 
-# Paper purifiers: Mean, Gaussian, JPEG + DiffPure, DDIM, MimicDiffusion, ContrastDiff, SSNI, DCDefense.
-_PAPER_PURIFIERS = frozenset(
+# Supported purifiers: Mean, Gaussian, JPEG + DiffPure, DDIM, MimicDiffusion, ContrastDiff, SSNI, DCDefense.
+_SUPPORTED_PURIFIERS = frozenset(
     {
         "Mean",
         "Gaussian",
@@ -31,9 +31,9 @@ class Purifier:
         batch_size: int = None,
         seed: int = None,
     ):
-        if method not in _PAPER_PURIFIERS:
+        if method not in _SUPPORTED_PURIFIERS:
             raise ValueError(
-                f"Unknown purifier {method!r}. Supported: {sorted(_PAPER_PURIFIERS)}"
+                f"Unknown purifier {method!r}. Supported: {sorted(_SUPPORTED_PURIFIERS)}"
             )
         self.method = method
         self.settings = settings

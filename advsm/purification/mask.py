@@ -131,7 +131,6 @@ def build_rand_masks(
     assert 0.0 <= sparsity <= 1.0, f"sparsity must be in [0,1], got {sparsity}"
 
     if clamp:
-        # doesn't affect mask; kept only because you asked for these args
         _ = x.clamp(clamp_min, clamp_max)
 
     B, C, H, W = x.shape
@@ -173,8 +172,8 @@ def save_region_overlays(
     masks: Dict[str, torch.Tensor],     # each [B,1,H,W] OR [B,C,H,W] bool
     out_dir: str,
     b: int = 10,
-    alpha: float = 1.0,                # <<< more transparent (was 0.45)
-    overlay_scale: float = 1.0,        # <<< reduce color intensity
+    alpha: float = 1.0,
+    overlay_scale: float = 1.0,
     prefix: str = "viz",
     indices: Optional[list] = None,
     normalize: bool = False,
@@ -194,7 +193,6 @@ def save_region_overlays(
     assert base_mode in ("rgb", "gray"), f"base_mode must be 'rgb' or 'gray', got {base_mode}"
     assert mask_reduce in ("any", "all"), f"mask_reduce must be 'any' or 'all', got {mask_reduce}"
 
-    # NOTE: keep your color choices
     COLORS = {
         "purified":  np.array([0,   255, 0  ], dtype=np.float32),  # green
         "smooth":    np.array([255, 255, 0  ], dtype=np.float32),  # yellow
@@ -258,7 +256,7 @@ def save_region_overlays(
         # ---- overlay drawing (HW-based) ----
         out = base.copy().astype(np.float32)
         
-        # IMPORTANT: paint in order; later overwrites earlier.
+        # Paint in order; later regions overwrite earlier ones.
         for region in OVERLAY_ORDER:
             m_hw = reduce_to_hw(masks[region][idx])  # [H,W] bool
             if not m_hw.any():

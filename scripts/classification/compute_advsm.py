@@ -171,7 +171,7 @@ def parse_args():
     p.add_argument("--threat_model", type=str, default="Linf")
     p.add_argument("--input", type=str, required=True)
     p.add_argument("--start_idx", type=int, default=0)
-    p.add_argument("--end_idx", type=int, default=100, help="Paper §6.1: AdvSM on 100 clean-correct samples")
+    p.add_argument("--end_idx", type=int, default=100, help="AdvSM sample count (default 100 clean-correct images)")
     p.add_argument("--model", dest="models", action="append", required=True)
     p.add_argument("--batch_size", type=int, default=None)
     p.add_argument("--amp", action="store_true")

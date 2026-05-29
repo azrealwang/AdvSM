@@ -7,7 +7,7 @@
 
 ## Supported systems
 
-| Setting | Models (paper) | AdvSM | Attack | Eval |
+| Setting | Models | AdvSM | Attack | Eval |
 |--------|----------------|-------|--------|------|
 | **Classification** | 8 ImageNet classifiers | `scripts/classification/compute_advsm.py` | `scripts/classification/attack_pgd.py` | `scripts/classification/eval_accuracy.py` |
 | **Purification** | 9 purifiers + ResNet-50 (AdvSM: 8, excl. MimicDiffusion) | `scripts/purification/compute_advsm.py` | `scripts/purification/attack_pgd_transfer.py` | `scripts/purification/eval_accuracy.py` |
@@ -58,7 +58,7 @@ mv data/imagenet/imagenet/*.png data/imagenet/ && rm -R data/imagenet/imagenet
 
 **Models** ResNet-50, ConvNeXt-B, ViT-B, Swin-B + four RobustBench robust counterparts (`configs/classifiers.yaml`).
 
-**AdvSM:** gradient threshold 10⁻⁵, 100 samples (all **8** classifiers → 8×8 similarity):
+**AdvSM:** gradient threshold 10⁻⁵, 100 samples:
 
 ```bash
 python scripts/classification/compute_advsm.py \
@@ -110,7 +110,7 @@ python scripts/classification/eval_accuracy.py \
 | DCDefense | `timesteps=150`, `forward_noise_steps=1`, `strength_l=0.2`, `strength_s=0.1` |
 | DDIM (surrogate) | `timesteps=150`, `denoise_steps=3` |
 
-**AdvSM:** random-sign probes, ε = 16/255, response threshold θ = 2/255, M = 5, N = 10 (defaults in `compute_advsm.py`), 100 samples (all **8** paper purifiers except MimicDiffusion → 8×8 similarity):
+**AdvSM:** random-sign probes, ε = 16/255, response threshold θ = 2/255, M = 5, N = 10 (defaults in `compute_advsm.py`), 100 samples:
 
 ```bash
 python scripts/purification/compute_advsm.py \
@@ -170,7 +170,7 @@ bash scripts/vlm/download_and_prepare_vqav2.sh
 
 **Models:** LLaVA-1.5-7B + shared projector; **encoders** CLIP ViT-L/14 (non-robust) and FARE / TeCoA / SimCLIP (robust). **PGDTransfer:** ε = 4/255, α = 1/255, T = 100, untargeted.
 
-**AdvSM:** threshold 10⁻⁵, 100 samples (`--end-idx 100`; all **4** encoders → 4×4 similarity):
+**AdvSM:** threshold 10⁻⁵, 100 samples:
 
 ```bash
 python scripts/vlm/compute_advsm.py \

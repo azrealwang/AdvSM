@@ -1,5 +1,5 @@
-# Paper Table 1: four standard and four adversarially trained ImageNet classifiers.
-# CLI keys match paper names; ``robustbench_id`` is passed to RobustBench when applicable.
+# Eight ImageNet classifiers: four standard (timm) and four Linf-robust (RobustBench).
+# CLI keys match the names below; ``robustbench_id`` is passed to RobustBench when applicable.
 
 models:
   ResNet-50:

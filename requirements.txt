@@ -8,7 +8,7 @@ tqdm
 matplotlib
 opencv-python
 
-# Classification (RobustBench + paper classifiers)
+# Classification (RobustBench + timm / robust ImageNet classifiers)
 robustbench @ git+https://github.com/RobustBench/robustbench.git
 timm
 

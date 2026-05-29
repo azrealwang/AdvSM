@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Accuracy of a classifier behind an optional purifier (paper purification eval)."""
+"""Accuracy of a classifier behind an optional purifier."""
 import os
 import sys
 
@@ -26,7 +26,7 @@ def parse_args():
         description="Load images, optionally purify, classify, report accuracy."
     )
     p.add_argument("--data", type=str, required=True, choices=("cifar10", "imagenet"))
-    p.add_argument("--target", type=str, required=True, help="Classifier (paper name or RobustBench id)")
+    p.add_argument("--target", type=str, required=True, help="Classifier (config name or RobustBench id)")
     p.add_argument("--input", type=str, required=True, help="Directory of NNNNN_label.png images")
     p.add_argument("--defense", type=str, default=None, help="Purifier name (omit for raw images)")
     p.add_argument(

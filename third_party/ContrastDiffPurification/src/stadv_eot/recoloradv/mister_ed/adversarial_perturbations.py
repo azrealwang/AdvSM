@@ -258,7 +258,7 @@ class AdversarialPerturbation(nn.Module):
             attacks only, according to the given classifier_net, normalizer
             SUCCESSFUL here means that the adversarial is different
         ARGS:
-            TODO: fill in when I'm not in crunchtime
+            TODO: not implemented
         """
 
         assert self.originals is not None

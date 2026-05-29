@@ -286,7 +286,7 @@ class LangevinCorrector(Corrector):
 class AnnealedLangevinDynamics(Corrector):
   """The original annealed Langevin dynamics predictor in NCSN/NCSNv2.
 
-  We include this corrector only for completeness. It was not directly used in our paper.
+  Included for completeness only (not used in the default evaluation setup).
   """
 
   def __init__(self, sde, score_fn, snr, n_steps):

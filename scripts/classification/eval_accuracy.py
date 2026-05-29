@@ -14,13 +14,13 @@ ensure_third_party_on_path()
 import argparse
 import torch
 
-from advsm.classification.models import _PAPER_MODEL_KEYS, load_classifier
+from advsm.classification.models import _CLASSIFIER_MODEL_KEYS, load_classifier
 from advsm.classification.utils import load_samples, predict
 
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--target", type=str, required=True, choices=_PAPER_MODEL_KEYS)
+    p.add_argument("--target", type=str, required=True, choices=_CLASSIFIER_MODEL_KEYS)
     p.add_argument("--input", type=str, required=True)
     p.add_argument("--start_idx", type=int, default=0)
     p.add_argument("--end_idx", type=int, default=1000)

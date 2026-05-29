@@ -129,7 +129,7 @@ You can reproduce our results using seed: 121, 122, 123.
 - Other dependencies as listed in `requirements.txt`
 
 ## Reference
-Our codebase is implemented based on the following code, we would like to thank for their great work.
+This implementation builds on the following projects; thanks to their authors.
 [https://github.com/NVlabs/DiffPure.git]
 [https://github.com/ml-postech/robust-evaluation-of-diffusion-based-purification.git]
 [https://github.com/ZSHsh98/EPS-AD.git]

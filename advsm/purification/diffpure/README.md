@@ -200,7 +200,7 @@ purposes only. For business inquiries, please contact
 
 ## Citation
 
-Please cite our paper, if you happen to use this codebase:
+Please cite the DiffPure paper if you use this codebase:
 
 ```
 @inproceedings{nie2022DiffPure,

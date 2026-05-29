@@ -1,4 +1,4 @@
-# LVLM visual encoders (paper): CLIP + FARE / TeCoA / SimCLIP in LLaVA-1.5-7B.
+# LVLM visual encoders: CLIP + FARE / TeCoA / SimCLIP in LLaVA-1.5-7B.
 # All weights under ``checkpoints/`` (see scripts/vlm/download_*.sh).
 #
 # Prereq: LLaVA package — see README Install (pip install -e LLaVA or LLAVA_ROOT).

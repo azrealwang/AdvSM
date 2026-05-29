@@ -1,4 +1,4 @@
-"""Load paper ImageNet classifiers (Table 1) from ``configs/classifiers.yaml``."""
+"""Load ImageNet classifiers from ``configs/classifiers.yaml``."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from advsm._paths import repo_root
 
 _DEFAULT_CONFIG = Path(repo_root()) / "configs" / "classifiers.yaml"
 
-_PAPER_MODEL_KEYS = [
+_CLASSIFIER_MODEL_KEYS = [
     "ResNet-50",
     "ConvNeXt-B",
     "ViT-B",
