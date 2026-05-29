@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+from types import MethodType
+from typing import Any, Callable
 
 import torch
 
@@ -88,6 +89,23 @@ class RobustLLaVAWrapper(BaseRobustVQAModel):
             pad_fill=float(mean[0].item()),
         ).to(dtype=self.model.dtype)
 
+    def _encode_images_for_loss(self, images: torch.Tensor) -> torch.Tensor:
+        """
+        Same as LLaVA ``encode_images``, but without CLIPVisionTower's ``@torch.no_grad``
+        so input-gradient attacks / AdvSM can backprop to ``images``.
+        """
+        inner = self.model.get_model()
+        tower = inner.get_vision_tower()
+        if getattr(tower, "encoder", None) is not None:
+            feats = tower(images)
+        elif hasattr(tower, "vision_tower") and hasattr(tower, "feature_select"):
+            px = images.to(device=tower.device, dtype=tower.dtype)
+            outs = tower.vision_tower(px, output_hidden_states=True)
+            feats = tower.feature_select(outs).to(images.dtype)
+        else:
+            feats = tower(images)
+        return inner.mm_projector(feats)
+
     def _wrap_question(self, question: str) -> str:
         from llava.constants import DEFAULT_IMAGE_TOKEN, DEFAULT_IM_END_TOKEN, DEFAULT_IM_START_TOKEN
 
@@ -173,14 +191,34 @@ class RobustLLaVAWrapper(BaseRobustVQAModel):
             labels[i, :L] = labs[i].to(self._device)
             attn[i, :L] = True
 
-        out = self.model(
-            input_ids=input_ids,
-            attention_mask=attn,
-            images=pixel.to(self._device),
-            image_sizes=[(self._crop, self._crop)] * B,
-            labels=labels,
-            return_dict=True,
-        )
+        pixel = pixel.to(self._device)
+        need_image_grad = bool(images.requires_grad)
+        orig_encode: Callable | None = None
+        if need_image_grad:
+            orig_encode = self.model.encode_images
+            self.model.encode_images = MethodType(
+                lambda _m, imgs: self._encode_images_for_loss(imgs),
+                self.model,
+            )
+
+        try:
+            with torch.set_grad_enabled(True):
+                out = self.model(
+                    input_ids=input_ids,
+                    attention_mask=attn,
+                    images=pixel,
+                    image_sizes=[(self._crop, self._crop)] * B,
+                    labels=labels,
+                    return_dict=True,
+                )
+        finally:
+            if orig_encode is not None:
+                self.model.encode_images = orig_encode
+
         if out.loss is None:
             raise RuntimeError("Model returned no loss; check labels / multimodal inputs.")
+        if need_image_grad and not out.loss.requires_grad:
+            raise RuntimeError(
+                "NLL loss is not connected to input images; vision tower may block gradients."
+            )
         return out.loss
