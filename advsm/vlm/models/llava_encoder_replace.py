@@ -111,9 +111,10 @@ class LlavaEncoderReplaceWrapper(RobustLLaVAWrapper):
             "device": cfg.get("device", "cuda"),
             "robust": True,
             "attackable": cfg.get("attackable", True),
-            "load_encoder": cfg.get("load_encoder"),
             "prompt_mode": cfg.get("prompt_mode", "short_answer"),
         }
+        if cfg.get("load_encoder") is not None:
+            cfg_load["load_encoder"] = cfg["load_encoder"]
         super().__init__(name, cfg_load)
         self.robust_encoder_name = str(cfg.get("encoder_type", "unknown"))
         self.backend_name = cfg.get("backend_name", "llava_llama")

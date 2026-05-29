@@ -43,18 +43,21 @@ class RobustLLaVAWrapper(BaseRobustVQAModel):
         self._conv_mode = cfg.get("conv_mode", "llava_v1")
         self._prompt_mode = cfg.get("prompt_mode", "short_answer")
         self._device = cfg.get("device", "cuda")
-        load_enc = cfg.get("load_encoder")
-
         model_path = cfg["model_path"]
         model_base = cfg.get("model_base")
         model_name = get_model_name_from_path(model_path)
+        load_kwargs: dict[str, Any] = {}
+        load_enc = cfg.get("load_encoder")
+        if load_enc is not None:
+            # Robust-LLaVA forks only; standard haotian-liu/LLaVA must not pass this to from_pretrained.
+            load_kwargs["load_encoder"] = load_enc
         self.tokenizer, self.model, self.image_processor, _ctx = load_pretrained_model(
             model_path,
             model_base,
             model_name,
             device_map={"": self._device} if self._device != "cuda" else "auto",
             device=self._device,
-            load_encoder=load_enc,
+            **load_kwargs,
         )
         self.model.eval()
         for p in self.model.parameters():
