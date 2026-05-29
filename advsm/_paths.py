@@ -20,6 +20,27 @@ def checkpoint_path(*parts: str) -> str:
     return os.path.join(checkpoints_dir(), *parts)
 
 
+def require_checkpoint(*parts: str) -> str:
+    """Return ``checkpoints/<parts>`` and raise if the file is missing."""
+    path = checkpoint_path(*parts)
+    if os.path.isfile(path):
+        return path
+    hint = "Run from the repository root, e.g.\n  bash scripts/download_guided_diffusion.sh"
+    if parts and parts[0] == "score_sde":
+        hint += "\n  (CIFAR score_sde weights go under checkpoints/score_sde/cifar10/)"
+    raise FileNotFoundError(f"Missing checkpoint: {path}\n{hint}")
+
+
+def imagenet_guided_diffusion_ckpt() -> str:
+    """OpenAI 256×256 unconditional diffusion (DiffPure, DDIM, SSNI, DC, MimicDiffusion, ContrastDiff)."""
+    return require_checkpoint("guided_diffusion", "imagenet", "256x256_diffusion_uncond.pt")
+
+
+def cifar10_score_sde_ckpt(filename: str = "checkpoint_8.pth") -> str:
+    """Score-SDE checkpoint for CIFAR-10 diffpure runners (default: checkpoint_8.pth)."""
+    return require_checkpoint("score_sde", "cifar10", filename)
+
+
 def third_party_root() -> str:
     return os.path.join(_REPO_ROOT, "third_party")
 

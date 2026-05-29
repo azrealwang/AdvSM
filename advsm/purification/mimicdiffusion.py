@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-from advsm._paths import checkpoint_path
+from advsm._paths import imagenet_guided_diffusion_ckpt
 from MimicDiffusion.load_model import load_models as md_load_models
 from MimicDiffusion.purification import PurificationForward_mimic
 from MimicDiffusion.utils import clf2diff, diff2clf
@@ -75,7 +75,9 @@ class MimicDiffusionDefense:
         attack_steps = [seq]
 
         args_ns = types.SimpleNamespace(dataset=self.data)
-        model_src = checkpoint_path("guided_diffusion", "imagenet", "256x256_diffusion_uncond.pt")
+        if self.data != "imagenet":
+            raise ValueError("MimicDiffusionDefense currently supports data='imagenet' only.")
+        model_src = imagenet_guided_diffusion_ckpt()
         _clf, diffusion = md_load_models(args_ns, model_src, self.device)
         diffusion = diffusion.to(self.device).float()
         dummy_clf = nn.Identity().to(self.device).eval()

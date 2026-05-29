@@ -22,5 +22,7 @@ open_clip_torch
 
 # Purification (diffusion-based defenses)
 torchsde
+lmdb
+ninja
 
 # Optional: DiffAttack / DiffHammer / DiffBreak baselines (install separately if needed)

@@ -12,11 +12,12 @@ import time
 import torch
 import torchvision.utils as tvu
 
+from advsm._paths import imagenet_guided_diffusion_ckpt
 from ..guided_diffusion.script_util import create_model_and_diffusion, model_and_diffusion_defaults
 
 
 class GuidedDiffusion(torch.nn.Module):
-    def __init__(self, args, config, device=None, model_dir='models/guided_diffusion'):
+    def __init__(self, args, config, device=None, model_dir=None):
         super().__init__()
         self.args = args
         self.config = config
@@ -29,7 +30,14 @@ class GuidedDiffusion(torch.nn.Module):
         model_config.update(vars(self.config.model))
         # print(f'model_config: {model_config}')
         model, diffusion = create_model_and_diffusion(**model_config)
-        model.load_state_dict(torch.load(f'{model_dir}/imagenet/256x256_diffusion_uncond.pt', map_location='cpu'))
+        model_ckpt = (
+            os.path.join(model_dir, "imagenet", "256x256_diffusion_uncond.pt")
+            if model_dir is not None
+            else imagenet_guided_diffusion_ckpt()
+        )
+        if model_dir is not None and not os.path.isfile(model_ckpt):
+            raise FileNotFoundError(f"Missing guided diffusion weights: {model_ckpt}")
+        model.load_state_dict(torch.load(model_ckpt, map_location="cpu"))
         # model.requires_grad_(False).eval().to(self.device)
         model.eval().to(device)
 

@@ -10,7 +10,7 @@ from torch import Tensor
 
 import yaml
 
-from advsm._paths import checkpoint_path, third_party_root
+from advsm._paths import imagenet_guided_diffusion_ckpt, third_party_root
 from DC.utils import clf2diff, diff2clf
 from DC.purification import PurificationForward, get_ddim_steps, get_beta_schedule, extract
 from DC.guided_diffusion.script_util import create_model_and_diffusion, model_and_diffusion_defaults
@@ -177,7 +177,7 @@ class DCDefense:
         # For ImageNet, DC uses a guided_diffusion UNet whose config is in diffusion_configs/imagenet.yml.
         if self.data == "imagenet":
             cfg_path = os.path.join(third_party_root(), "DC", "diffusion_configs", "imagenet.yml")
-            model_src = checkpoint_path("guided_diffusion", "imagenet", "256x256_diffusion_uncond.pt")
+            model_src = imagenet_guided_diffusion_ckpt()
 
             with open(cfg_path, "r") as f:
                 config_dict = yaml.safe_load(f)

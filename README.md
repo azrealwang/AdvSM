@@ -85,6 +85,17 @@ python scripts/classification/eval_accuracy.py \
 
 ## Purification
 
+**Diffusion checkpoints** (under `checkpoints/`, from repo root):
+
+| Purifier | Weight file |
+|----------|-------------|
+| DiffPure, **DDIM**, MimicDiffusion, ContrastDiff, SSNI, DCDefense | `guided_diffusion/imagenet/256x256_diffusion_uncond.pt` |
+| (CIFAR-only runners) | `score_sde/cifar10/checkpoint_8.pth` or `checkpoint_35.pth` (SSNI) |
+
+```bash
+bash scripts/download_guided_diffusion.sh
+```
+
 **Data:** same 500-image `data/imagenet/` subset.
 
 **Pipeline:** fixed downstream classifier non-robust ResNet-50; vary purifier. **PGDTransfer** uses **DDIM** surrogate (`timesteps=150`, `denoise_steps=3`); ε = 4/255, T = 40, K = 5.

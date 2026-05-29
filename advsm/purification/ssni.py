@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-from advsm._paths import checkpoint_path, third_party_root
+from advsm._paths import cifar10_score_sde_ckpt, imagenet_guided_diffusion_ckpt, third_party_root
 from SSNI.utils import dict2namespace, clf2diff, diff2clf
 from SSNI.guided_diffusion.script_util import (
     create_model_and_diffusion,
@@ -81,10 +81,10 @@ class SSNIDefense:
         # Load SSNI guided-diffusion config and model, but force full float32 (no fp16)
         if self.data == "imagenet":
             cfg_path = os.path.join(third_party_root(), "SSNI", "configs", "imagenet.yml")
-            model_src = checkpoint_path("guided_diffusion", "imagenet", "256x256_diffusion_uncond.pt")
+            model_src = imagenet_guided_diffusion_ckpt()
         elif self.data == "cifar10":
             cfg_path = os.path.join(third_party_root(), "SSNI", "configs", "cifar10.yml")
-            model_src = checkpoint_path("score_sde", "cifar10", "checkpoint_35.pth")
+            model_src = cifar10_score_sde_ckpt("checkpoint_35.pth")
         else:
             raise ValueError(f"SSNIDefense currently supports 'imagenet' or 'cifar10', got {self.data!r}")
 

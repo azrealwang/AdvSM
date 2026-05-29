@@ -6,7 +6,7 @@ import yaml
 import os
 import time
 
-from advsm._paths import checkpoint_path
+from advsm._paths import cifar10_score_sde_ckpt, imagenet_guided_diffusion_ckpt
 
 from .utils import dict2namespace
 from .guided_diffusion.script_util import create_model_and_diffusion, model_and_diffusion_defaults
@@ -66,13 +66,11 @@ class DiffPureDDIM():
             with open(os.path.join(current_dir, 'configs', 'cifar10.yml'), 'r') as f:
                 config = yaml.safe_load(f)
             config = dict2namespace(config)
-            model_dir = checkpoint_path("score_sde")
-            # print(f'model_config: {config}')
             model = mutils.create_model(config)
             optimizer = get_optimizer(config, model.parameters())
             ema = ExponentialMovingAverage(model.parameters(), decay=config.model.ema_rate)
             state = dict(step=0, optimizer=optimizer, model=model, ema=ema)
-            restore_checkpoint(f'{model_dir}/cifar10/checkpoint_8.pth', state, device)
+            restore_checkpoint(cifar10_score_sde_ckpt("checkpoint_8.pth"), state, device)
             ema.copy_to(model.parameters())
             model.eval().to(device)
             
@@ -80,7 +78,7 @@ class DiffPureDDIM():
             with open(os.path.join(current_dir, 'configs', 'imagenet.yml'), 'r') as f:
                 config = yaml.safe_load(f)
             config = dict2namespace(config)
-            model_ckpt = checkpoint_path("guided_diffusion", "imagenet", "256x256_diffusion_uncond.pt")
+            model_ckpt = imagenet_guided_diffusion_ckpt()
             model_config = model_and_diffusion_defaults()
             model_config.update(vars(config.model))
             model, _ = create_model_and_diffusion(**model_config)

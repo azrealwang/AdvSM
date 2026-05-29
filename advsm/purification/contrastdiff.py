@@ -78,9 +78,9 @@ class ContrastDiffDefense:
         model_config.update(vars(config.model))
         model_config["use_fp16"] = False
         model, _ = create_model_and_diffusion(**model_config)
-        from advsm._paths import checkpoint_path
+        from advsm._paths import imagenet_guided_diffusion_ckpt
 
-        model_src = checkpoint_path("guided_diffusion", "imagenet", "256x256_diffusion_uncond.pt")
+        model_src = imagenet_guided_diffusion_ckpt()
         state = torch.load(model_src, map_location="cpu")
         model.load_state_dict(state)
         model = model.eval().to(self.device).float()

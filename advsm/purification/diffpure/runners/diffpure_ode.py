@@ -142,27 +142,30 @@ class OdeGuidedDiffusion(torch.nn.Module):
 
         # load model
         if config.data.dataset == 'ImageNet':
+            from advsm._paths import imagenet_guided_diffusion_ckpt
+
             img_shape = (3, 256, 256)
-            model_dir = 'pretrained/guided_diffusion'
+            model_ckpt = imagenet_guided_diffusion_ckpt()
             model_config = model_and_diffusion_defaults()
             model_config.update(vars(self.config.model))
             print(f'model_config: {model_config}')
             model, _ = create_model_and_diffusion(**model_config)
-            model.load_state_dict(torch.load(f'{model_dir}/256x256_diffusion_uncond.pt', map_location='cpu'))
+            model.load_state_dict(torch.load(model_ckpt, map_location="cpu"))
 
             if model_config['use_fp16']:
                 model.convert_to_fp16()
 
         elif config.data.dataset == 'CIFAR10':
             img_shape = (3, 32, 32)
-            model_dir = 'pretrained/score_sde'
+            from advsm._paths import cifar10_score_sde_ckpt
+
             print(f'model_config: {config}')
             model = mutils.create_model(config)
 
             optimizer = get_optimizer(config, model.parameters())
             ema = ExponentialMovingAverage(model.parameters(), decay=config.model.ema_rate)
             state = dict(step=0, optimizer=optimizer, model=model, ema=ema)
-            restore_checkpoint(f'{model_dir}/checkpoint_8.pth', state, device)
+            restore_checkpoint(cifar10_score_sde_ckpt("checkpoint_8.pth"), state, device)
             ema.copy_to(model.parameters())
 
         else:
