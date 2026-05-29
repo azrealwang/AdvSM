@@ -17,17 +17,28 @@ Configs: `configs/classifiers.yaml`, `configs/vlm_models.yaml` (`clip`, `fare`, 
 
 ## Install
 
+Install in this order. **RobustBench must be installed last** (after the LLaVA package) to avoid dependency conflicts with `timm`.
+
+**1. Base dependencies**
+
 ```bash
 pip install -r requirements.txt
 ```
 
-**LVLM — LLaVA Python package** (weights are separate):
+**2. LLaVA Python package** (weights are separate)
 
 ```bash
 git clone https://github.com/haotian-liu/LLaVA.git
-pip install -e /path/to/LLaVA
+pip install -e LLaVA
 # or: export LLAVA_ROOT=/path/to/LLaVA
 python -c "from llava.model.builder import load_pretrained_model"
+```
+
+**3. RobustBench** (classification robust models; install after LLaVA)
+
+```bash
+pip install "robustbench @ git+https://github.com/RobustBench/robustbench.git"
+python -c "from robustbench import load_model"
 ```
 
 **Checkpoints** (`checkpoints/`, gitignored):
@@ -45,7 +56,7 @@ checkpoints/
 └── guided_diffusion/imagenet/256x256_diffusion_uncond.pt
 ```
 
-Robust classifiers load via [RobustBench](https://github.com/RobustBench/robustbench) (`git+https://github.com/RobustBench/robustbench.git` in `requirements.txt`) on first use.
+Robust classifiers load via [RobustBench](https://github.com/RobustBench/robustbench) on first use; weights cache under `models/` (gitignored).
 
 ## Classification
 

@@ -8,9 +8,8 @@ tqdm
 matplotlib
 opencv-python
 
-# Classification (RobustBench + timm / robust ImageNet classifiers)
-robustbench @ git+https://github.com/RobustBench/robustbench.git
-timm
+# Classification (install RobustBench after LLaVA — see README Install)
+timm>=1.0.9
 
 # VLM (LLaVA-based LVLM pipelines)
 transformers
