@@ -1,0 +1,23 @@
+hao_ddpm:
+  name: hao_ddpm.pth
+  url: https://nextcloud.cs.uwaterloo.ca/s/dDK9a9iRKwZxC6z
+  size: 143046049
+  checksum: !!binary |
+    H6NQuVJTSuRCsdUjXM5c0w==
+guided_model:
+  name: guided_model.pth
+  url: https://nextcloud.cs.uwaterloo.ca/s/biKEBCJ7e8spFmH
+  size: 2211383297
+  checksum: !!binary |
+    /Z3SM1uHNtUh3grtVL2Qyg==
+ddpm_model:
+  name: ddpm_model.tar.gz
+  url: https://nextcloud.cs.uwaterloo.ca/s/H5qMrFCX6DaaqN6
+  size: 420750686
+  checksum: 7c3526edbfd644661fad67cc91e584b5
+score_sde_model:
+  name: score_sde_model.pth
+  url: https://nextcloud.cs.uwaterloo.ca/s/b58G6SQ6aF7iqHY
+  size: 1707310559
+  checksum: !!binary |
+    2ybKgrfqNrdRmav27ZQznQ==

@@ -1,0 +1,43 @@
+# Paper Table 1: four standard and four adversarially trained ImageNet classifiers.
+# CLI keys match paper names; ``robustbench_id`` is passed to RobustBench when applicable.
+
+models:
+  ResNet-50:
+    dataset: imagenet
+    kind: robustbench
+    robustbench_id: Standard_R50
+
+  ConvNeXt-B:
+    dataset: imagenet
+    kind: timm
+    timm_name: convnext_base.fb_in1k
+
+  ViT-B:
+    dataset: imagenet
+    kind: timm
+    timm_name: vit_base_patch16_224
+
+  Swin-B:
+    dataset: imagenet
+    kind: timm
+    timm_name: swin_base_patch4_window7_224
+
+  "ResNet-50 (Robust)":
+    dataset: imagenet
+    kind: robustbench
+    robustbench_id: Salman2020Do_R50
+
+  "ConvNeXt-B (Robust)":
+    dataset: imagenet
+    kind: robustbench
+    robustbench_id: Liu2023Comprehensive_ConvNeXt-B
+
+  "ViT-B (Robust)":
+    dataset: imagenet
+    kind: robustbench
+    robustbench_id: Mo2022When_ViT-B
+
+  "Swin-B (Robust)":
+    dataset: imagenet
+    kind: robustbench
+    robustbench_id: Mo2022When_Swin-B

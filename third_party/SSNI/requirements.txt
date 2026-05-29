@@ -1,0 +1,19 @@
+numpy==1.19.4
+torch==2.0.1
+torchvision
+Pillow
+xformers==0.0.22
+robustbench @ git+https://github.com/RobustBench/robustbench.git@v1.0
+lmdb
+pyarrow==11.0.0
+PyYAML
+ninja
+nested_dict
+scipy
+wandb
+torchsde
+matplotlib
+seaborn
+pandas
+tqdm
+timm==0.5.4

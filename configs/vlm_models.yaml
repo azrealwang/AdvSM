@@ -1,0 +1,57 @@
+# LVLM visual encoders (paper): CLIP + FARE / TeCoA / SimCLIP in LLaVA-1.5-7B.
+# All weights under ``checkpoints/`` (see scripts/vlm/download_*.sh).
+#
+# Prereq: ``pip install -e /path/to/LLaVA`` or ``export LLAVA_ROOT=/path/to/LLaVA``
+
+models:
+  clip:
+    type: llava
+    robust: false
+    model_path: checkpoints/llava-v1.5-7b
+    model_base: null
+    conv_mode: llava_v1
+    device: cuda
+    attackable: true
+    prompt_mode: short_answer
+
+  fare:
+    type: llava_encoder_replace
+    robust: true
+    backend_model_path: checkpoints/llava-v1.5-7b
+    model_base: null
+    projector_path: checkpoints/llava-v1.5-7b/mm_projector.bin
+    encoder_type: fare
+    encoder_checkpoint: checkpoints/encoder_replace/fare/fare_eps_4.pt
+    vision_arch: ViT-L-14
+    conv_mode: llava_v1
+    device: cuda
+    attackable: true
+    prompt_mode: short_answer
+
+  tecoa:
+    type: llava_encoder_replace
+    robust: true
+    backend_model_path: checkpoints/llava-v1.5-7b
+    model_base: null
+    projector_path: checkpoints/llava-v1.5-7b/mm_projector.bin
+    encoder_type: tecoa
+    encoder_checkpoint: checkpoints/encoder_replace/tecoa/tecoa_eps_4.pt
+    vision_arch: ViT-L-14
+    conv_mode: llava_v1
+    device: cuda
+    attackable: true
+    prompt_mode: short_answer
+
+  simclip:
+    type: llava_encoder_replace
+    robust: true
+    backend_model_path: checkpoints/llava-v1.5-7b
+    model_base: null
+    projector_path: checkpoints/llava-v1.5-7b/mm_projector.bin
+    encoder_type: simclip
+    encoder_checkpoint: checkpoints/encoder_replace/simclip/simclip4.pt
+    vision_arch: ViT-L-14
+    conv_mode: llava_v1
+    device: cuda
+    attackable: true
+    prompt_mode: short_answer

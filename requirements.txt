@@ -1,0 +1,26 @@
+# Core
+torch
+torchvision
+numpy
+pillow
+pyyaml
+tqdm
+matplotlib
+opencv-python
+
+# Classification (RobustBench + paper classifiers)
+robustbench
+timm
+
+# VLM (LLaVA-based LVLM pipelines)
+transformers
+accelerate
+sentencepiece
+protobuf
+einops
+open_clip_torch
+
+# Purification (diffusion-based defenses)
+torchsde
+
+# Optional: DiffAttack / DiffHammer / DiffBreak baselines (install separately if needed)
