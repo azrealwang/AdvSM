@@ -293,7 +293,13 @@ def parse_args():
         metavar="T",
         help="White annotation text when |similarity| exceeds T.",
     )
-    p.add_argument("--hide-diag", action="store_true")
+    p.add_argument(
+        "--hide-diag",
+        dest="hide_diag",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="mask diagonal in heatmap (default: hide). Use --no-hide-diag to show 1.0 on diagonal.",
+    )
     p.add_argument(
         "--reload-model-each-batch",
         action="store_true",

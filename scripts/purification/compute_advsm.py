@@ -253,7 +253,12 @@ def parse_args():
     p.add_argument("--fixed_lim", type=float, default=1.0)
     p.add_argument("--min_lim", type=float, default=0.05)
     p.add_argument("--text_white_below", type=float, default=0.35)
-    p.add_argument("--hide_diag", action="store_true")
+    p.add_argument(
+        "--hide_diag",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="mask diagonal in heatmap (default: hide). Use --no-hide_diag to show 1.0 on diagonal.",
+    )
     p.add_argument("--title", type=str, default="Defense label-map cosine")
     return p.parse_args()
 
