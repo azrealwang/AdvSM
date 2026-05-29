@@ -10,7 +10,7 @@
 | Setting | Models | AdvSM | Attack | Eval |
 |--------|----------------|-------|--------|------|
 | **Classification** | 8 ImageNet classifiers | `scripts/classification/compute_advsm.py` | `scripts/classification/attack_pgd.py` | `scripts/classification/eval_accuracy.py` |
-| **Purification** | 9 purifiers + ResNet-50 (AdvSM: 8, excl. MimicDiffusion) | `scripts/purification/compute_advsm.py` | `scripts/purification/attack_pgd_transfer.py` | `scripts/purification/eval_accuracy.py` |
+| **Purification** | 9 purifiers + ResNet-50 | `scripts/purification/compute_advsm.py` | `scripts/purification/attack_pgd_transfer.py` | `scripts/purification/eval_accuracy.py` |
 | **LVLM / VQA** | CLIP / FARE / TeCoA / SimCLIP + LLaVA-v1.5-7B | `scripts/vlm/compute_advsm.py` | `scripts/vlm/attack_pgd_transfer.py` | `scripts/vlm/eval_vqa.py` |
 
 Configs: `configs/classifiers.yaml`, `configs/vlm_models.yaml` (`clip`, `fare`, `tecoa`, `simclip`).
