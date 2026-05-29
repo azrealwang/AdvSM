@@ -28,19 +28,17 @@ def build_masks(
       y_mean[m] = mean_n purify(x + noise_m)
       delta[m]  = y_mean[m] - y0
 
-    Regions (per pixel/channel):
-      smooth:
+    Regions (per pixel/channel), mutually exclusive:
+      purified:
         all m: |delta_m| <= thres
 
-      transfer:
-        all m: |delta_m| > thres AND sign(delta_m) == sign(noise_m)
-
-      inv (refined):
+      smooth:
         all m: |delta_m| > thres AND sign(delta_m) all same
         AND sign(noise_m) is NOT all same across m (i.e., contains both + and -)
 
-      unstable:
-        everything else (catch-all remainder)
+      sensitive (transfer | unstable):
+        transfer: all m: |delta_m| > thres AND sign(delta_m) == sign(noise_m)
+        unstable: everything else with |delta_m| > thres
     """
     assert x.ndim == 4, f"x must be [B,C,H,W], got {x.shape}"
     B, C, H, W = x.shape
@@ -85,37 +83,30 @@ def build_masks(
     s_delta = torch.sign(delta)                               # [-1,0,+1]
     s_noise = torch.sign(noise)                               # [-1,+1]
 
-    # smooth: exists m small
-    smooth = (abs_delta <= thres).all(dim=1)                  # [B,C,H,W]
+    purified = (abs_delta <= thres).all(dim=1)                # [B,C,H,W]
 
-    # A: all m large
     all_large = (abs_delta > thres).all(dim=1)                # [B,C,H,W]
 
-    # sign(delta) all same across m
     smax = s_delta.max(dim=1).values
     smin = s_delta.min(dim=1).values
     same_delta_sign = (smax == smin)                          # [B,C,H,W]
 
-    # sign(noise) NOT all same across m (must contain both + and -)
     nmax = s_noise.max(dim=1).values
     nmin = s_noise.min(dim=1).values
     noise_diff = (nmax != nmin)                               # [B,C,H,W]
 
-    # transfer: all match noise sign and all large
     sign_match = (s_delta == s_noise)                         # [B,M,C,H,W]
     transfer = all_large & sign_match.all(dim=1)              # [B,C,H,W]
 
-    # inv refined
-    inv = all_large & same_delta_sign & noise_diff            # [B,C,H,W]
+    smooth = all_large & same_delta_sign & noise_diff         # [B,C,H,W]
 
-    # unstable: everything else
-    unstable = ~(transfer | inv | smooth)                     # [B,C,H,W]
+    unstable = ~(transfer | smooth | purified)                # [B,C,H,W]
+    sensitive = transfer | unstable                         # [B,C,H,W]
 
     return {
-        "transfer": transfer,
-        "inv": inv,
+        "purified": purified,
         "smooth": smooth,
-        "unstable": unstable,
+        "sensitive": sensitive,
     }
 
 @torch.no_grad()
@@ -191,7 +182,7 @@ def save_region_overlays(
     mask_reduce: str = "any",           # for overlay only: "any" or "all" if masks are [B,C,H,W]
 ):
     """
-    Overlay priority (highest wins): transfer -> inv -> smooth -> unstable
+    Overlay priority (highest wins): sensitive -> smooth -> purified
     Overlay is computed on [H,W] after reducing channel-wise masks.
     TXT scores are computed on FULL [C,H,W] (no reduction), as exclusive partition using same priority.
     """
@@ -205,22 +196,16 @@ def save_region_overlays(
 
     # NOTE: keep your color choices
     COLORS = {
-        "smooth":   np.array([0,   255, 0  ], dtype=np.float32),  # green
-        "unstable": np.array([0,   128, 255], dtype=np.float32),  # blue
-        # "unstable": np.array([0,   0, 255], dtype=np.float32),  # blue
-        "inv":      np.array([255,   255, 0  ], dtype=np.float32),  # yellow
-        "transfer": np.array([0,   128, 255], dtype=np.float32),  # blue
-        # "transfer": np.array([255, 255,   0  ], dtype=np.float32),  # yellow
+        "purified":  np.array([0,   255, 0  ], dtype=np.float32),  # green
+        "smooth":    np.array([255, 255, 0  ], dtype=np.float32),  # yellow
+        "sensitive": np.array([0,   128, 255], dtype=np.float32),  # blue
     }
     ALPHA_W = {
-        "unstable": 0.4,  # lots of pixels -> lighter overlay
-        "smooth":   0.5,
-        "inv":      0.7,
-        "transfer": 0.4,  # sparse points -> strongest overlay
+        "purified":  0.5,
+        "smooth":    0.7,
+        "sensitive": 0.4,
     }
-    # apply in increasing priority; later overwrites earlier for overlay
-    OVERLAY_ORDER = ["unstable", "transfer", "smooth", "inv"]
-    PRIORITY = ["inv", "smooth", "transfer", "unstable"]
+    OVERLAY_ORDER = ["purified", "smooth", "sensitive"]
 
     if indices is None:
         indices = list(range(min(b, B)))
@@ -296,26 +281,22 @@ def save_region_overlays(
                 m = m.expand(C, H, W)
             return m
 
-        m_transfer = to_chw_bool(masks["transfer"][idx])
-        m_inv      = to_chw_bool(masks["inv"][idx])
-        m_smooth   = to_chw_bool(masks["smooth"][idx])
+        m_sensitive = to_chw_bool(masks["sensitive"][idx])
+        m_smooth = to_chw_bool(masks["smooth"][idx])
+        m_purified = to_chw_bool(masks["purified"][idx])
 
-        # exclusive (priority): transfer > inv > smooth > unstable
-        ex_transfer = m_transfer
-        ex_inv      = m_inv & ~ex_transfer
-        ex_smooth   = m_smooth & ~(ex_transfer | ex_inv)
-        ex_unstable = ~(ex_transfer | ex_inv | ex_smooth)
+        ex_sensitive = m_sensitive
+        ex_smooth = m_smooth & ~ex_sensitive
+        ex_purified = m_purified & ~(ex_sensitive | ex_smooth)
 
         denom = float(C * H * W)
-        frac_transfer = float(ex_transfer.float().sum().item() / denom)
-        frac_inv      = float(ex_inv.float().sum().item() / denom)
-        frac_smooth   = float(ex_smooth.float().sum().item() / denom)
-        frac_unstable = float(ex_unstable.float().sum().item() / denom)
+        frac_sensitive = float(ex_sensitive.float().sum().item() / denom)
+        frac_smooth = float(ex_smooth.float().sum().item() / denom)
+        frac_purified = float(ex_purified.float().sum().item() / denom)
 
         meta_path = os.path.join(out_dir, f"{prefix}_{idx:05d}.txt")
         with open(meta_path, "w") as f:
+            f.write(f"purified: {frac_purified:.6f}\n")
             f.write(f"smooth: {frac_smooth:.6f}\n")
-            f.write(f"unstable: {frac_unstable:.6f}\n")
-            f.write(f"inv: {frac_inv:.6f}\n")
-            f.write(f"transfer: {frac_transfer:.6f}\n")
-            f.write(f"sum: {(frac_smooth+frac_unstable+frac_inv+frac_transfer):.6f}\n")
+            f.write(f"sensitive: {frac_sensitive:.6f}\n")
+            f.write(f"sum: {(frac_purified + frac_smooth + frac_sensitive):.6f}\n")

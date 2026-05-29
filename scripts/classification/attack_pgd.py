@@ -16,6 +16,7 @@ import argparse
 from time import time
 
 import torch
+from tqdm import tqdm
 
 from advsm.classification.models import _PAPER_MODEL_KEYS, load_classifier
 from advsm.classification.utils import load_samples, save_all_images
@@ -63,7 +64,8 @@ def main() -> None:
     t0 = time()
     n = len(y_test)
     bs = max(1, args.batch_size)
-    for start in range(0, n, bs):
+    starts = range(0, n, bs)
+    for start in tqdm(starts, desc=f"attack {args.model}", unit="batch"):
         end = min(start + bs, n)
         x_adv = attack.perturb(x_test[start:end], y_test[start:end])
         save_all_images(x_adv.cpu(), y_test[start:end], args.output, args.start_idx + start)

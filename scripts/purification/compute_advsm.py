@@ -15,9 +15,9 @@ ensure_third_party_on_path()
 Defense mask label maps and cross-defense cosine similarity.
 
 Exclusive regions (from build_masks) -> per-pixel labels on [C, H, W]:
-  smooth (green, no change):     0  -> gray (128)
-  inv (yellow):                 -1  -> black (0)
-  transfer + unstable (blue):    1  -> white (255)
+  purified (probe-insensitive):  0  -> gray (128)
+  smooth (sign-invariant):      -1  -> black (0)
+  sensitive (transfer|unstable): 1  -> white (255)
 
 Saves grayscale maps per defense/image/channel; cosine on flattened labels in [-1, 1].
 """
@@ -74,29 +74,26 @@ def parse_defense_specs(def_args: List[str]) -> List[DefenseSpec]:
 # Label maps & similarity
 # -------------------------
 def masks_to_label_map(
+    purified: np.ndarray,
     smooth: np.ndarray,
-    inv: np.ndarray,
-    transfer: np.ndarray,
-    unstable: np.ndarray,
+    sensitive: np.ndarray,
 ) -> np.ndarray:
     """
     Exclusive bool masks [C, H, W] -> int8 labels in {-1, 0, 1}.
     """
-    lab = np.zeros(smooth.shape, dtype=np.int8)
-    lab[smooth] = 0
-    lab[inv] = -1
-    lab[transfer] = 1
-    lab[unstable] = 1
+    lab = np.zeros(purified.shape, dtype=np.int8)
+    lab[purified] = 0
+    lab[smooth] = -1
+    lab[sensitive] = 1
     return lab
 
 
 def sample_label_map(masks: Dict[str, torch.Tensor], batch_idx: int) -> np.ndarray:
     """One sample: [C, H, W] int8 labels."""
     return masks_to_label_map(
+        masks["purified"][batch_idx].cpu().numpy(),
         masks["smooth"][batch_idx].cpu().numpy(),
-        masks["inv"][batch_idx].cpu().numpy(),
-        masks["transfer"][batch_idx].cpu().numpy(),
-        masks["unstable"][batch_idx].cpu().numpy(),
+        masks["sensitive"][batch_idx].cpu().numpy(),
     )
 
 
@@ -131,7 +128,7 @@ def label_cosine_similarity(a: np.ndarray, b: np.ndarray, eps: float = 1e-12) ->
 def label_map_stats(lab: np.ndarray) -> str:
     n = lab.size
     f = {v: float((lab == v).sum()) / n for v in (-1, 0, 1)}
-    return f"inv={f[-1]:.1%} smooth={f[0]:.1%} other={f[1]:.1%}"
+    return f"purified={f[0]:.1%} smooth={f[-1]:.1%} sensitive={f[1]:.1%}"
 
 
 # -------------------------
@@ -299,7 +296,7 @@ def main():
         masks = merge_masks(chunk_masks)
         safe = spec.name.replace(os.sep, "_").replace(" ", "_")
 
-        for bi in range(masks["smooth"].shape[0]):
+        for bi in range(masks["purified"].shape[0]):
             img_idx = args.start_idx + bi
             lab = sample_label_map(masks, bi)
             label_maps[di].append(lab)

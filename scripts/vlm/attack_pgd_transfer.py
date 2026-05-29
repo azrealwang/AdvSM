@@ -118,7 +118,7 @@ def main():
 
     meta_rows = []
     batch_idx = 0
-    for batch in tqdm(dl, desc="attack", unit="batch"):
+    for batch in tqdm(dl, desc=f"attack {args.source}", unit="batch"):
         imgs = batch["image"].to(dev)
         qs = batch["question"]
         ans = batch["answer"]

@@ -17,6 +17,7 @@ from time import time
 
 import torch
 from torch import Tensor
+from tqdm import tqdm
 
 from advsm.classification.utils import (
     load_one_model,
@@ -151,12 +152,16 @@ def main() -> None:
     x_test, y_test = load_samples(args.input, args.start_idx, args.end_idx)
     x_test = Tensor(x_test)
     y_test = Tensor(y_test).long()
-    batch_size = args.batch_size or len(y_test)
+    batch_size = args.batch_size or 1
 
     if args.defense:
         purifier = Purifier(args.defense, d_settings, batch_size, args.seed)
         x_purified = []
-        for start in range(0, len(y_test), batch_size):
+        for start in tqdm(
+            range(0, len(y_test), batch_size),
+            desc=f"purify clean ({args.defense})",
+            unit="batch",
+        ):
             idx = slice(start, min(start + batch_size, len(y_test)))
             x_purified.append(purifier.purify(x_test[idx]).detach().cpu())
         x_purified = torch.cat(x_purified, 0)
@@ -177,7 +182,14 @@ def main() -> None:
     attack = build_attack(args, target, purifier, eps)
     os.makedirs(args.output, exist_ok=True)
     t0 = time()
-    for start in range(0, len(y_test), batch_size):
+    attack_label = f"{args.attack}"
+    if args.defense:
+        attack_label += f" / {args.defense}"
+    for start in tqdm(
+        range(0, len(y_test), batch_size),
+        desc=f"attack {attack_label}",
+        unit="batch",
+    ):
         end = min(start + batch_size, len(y_test))
         idx = slice(start, end)
         x_adv = attack.perturb(x=x_test[idx], y=eval_labels[idx]).detach().cpu()
@@ -189,7 +201,11 @@ def main() -> None:
     d_linf = (x_adv_load - x_test).abs().max() * 255
     if args.defense:
         x_pur = []
-        for start in range(0, len(y_test), batch_size):
+        for start in tqdm(
+            range(0, len(y_test), batch_size),
+            desc=f"purify adv ({args.defense})",
+            unit="batch",
+        ):
             idx = slice(start, min(start + batch_size, len(y_test)))
             x_pur.append(purifier.purify(x_adv_load[idx]).detach().cpu())
         x_eval = torch.cat(x_pur, 0)
