@@ -56,7 +56,7 @@ Bundled **`data/imagenet/clean-correct-500.zip`** — **500** clean RGB PNGs on 
 ```bash
 unzip -q -o data/imagenet/clean-correct-500.zip -d data/imagenet
 mv data/imagenet/imagenet/*.png data/imagenet/
-rmdir data/imagenet/imagenet
+rm -R data/imagenet/imagenet
 ```
 
 Filenames use sequential index + ground-truth class id: `00000_305.png`, `00001_559.png`, … `00499_<class_id>.png`.
