@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-import os, sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-import _path  # noqa: F401
-
 """Convert VQAv2 val annotations + questions to generic jsonl for this codebase."""
 from __future__ import annotations
 

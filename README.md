@@ -1,20 +1,30 @@
 # AdvSM
 
-Code for **Adversarial Robustness Optimization Increases Attack Transferability and Weakens Defense Isolation** (IEEE S&P).
+Code for **Adversarial Robustness Optimization Increases Attack Transferability and Weakens Defense Isolation** (IEEE S&P 2026).
 
 - **AdvSM** (Adversarial Sensitivity Maps): quantify alignment among robustness-optimized defenses.
 - **PGDTransfer**: PGD + EOT + DDIM-surrogate adaptive attack for transfer across defenses in the same family.
 
+**Paper settings** below follow §6.1 and Tables 5–6 of the submission PDF (*Rethinking Transferability* draft). Primary attack protocol: **untargeted**, **ℓ∞ ε = 4/255**. **500** clean-correct samples per attack/eval run; **100** for AdvSM maps.
+
 ## Supported systems
 
-| Setting | Models | Generate AdvSM | Attack |
-|--------|--------|----------------|--------|
-| **Classification** | 4 standard + 4 robust ImageNet classifiers (Table 1) | `scripts/classification/compute_advsm.py` | `scripts/classification/attack_pgd.py` (**PGD only**) |
-| **Purification** | Mean, Gaussian, JPEG, DiffPure, DDIM, MimicDiffusion, ContrastDiff, DCDefense, SSNI | `scripts/purification/compute_advsm.py` | `scripts/purification/attack_pgd_transfer.py` (**7 attacks**) |
-| **LVLM / VQA** | CLIP, FARE, TeCoA, SimCLIP | `scripts/vlm/compute_advsm.py` | `scripts/vlm/attack_pgd_transfer.py` (**PGDTransfer only**) |
+| Setting | Models (paper) | AdvSM | Attack | Eval |
+|--------|----------------|-------|--------|------|
+| **Classification** | 8 ImageNet classifiers (Table 1) | `scripts/classification/compute_advsm.py` | `scripts/classification/attack_pgd.py` | `scripts/classification/eval_accuracy.py` |
+| **Purification** | 9 purifiers + ResNet-50 (Tables 2, 5, 11) | `scripts/purification/compute_advsm.py` | `scripts/purification/attack_pgd_transfer.py` | `scripts/purification/eval_accuracy.py` |
+| **LVLM / VQA** | CLIP + FARE / TeCoA / SimCLIP (Table 1, §6.5) | `scripts/vlm/compute_advsm.py` | `scripts/vlm/attack_pgd_transfer.py` | `scripts/vlm/eval_vqa.py` |
 
-Classifier names and RobustBench ids: `configs/classifiers.yaml`.  
-VLM encoders: `configs/vlm_models.yaml` (`clip`, `fare`, `tecoa`, `simclip`).
+Configs: `configs/classifiers.yaml` (Table 1), `configs/vlm_models.yaml` (`clip`, `fare`, `tecoa`, `simclip`).
+
+### Table 6 — attack hyperparameters (ε = 4/255)
+
+| Setting | ε | step α | iterations T | EOT K |
+|--------|---|--------|--------------|-------|
+| Classifier (`attack_pgd.py`, untargeted) | 4/255 | ε/4 → **1/255** | **10** | — |
+| Classifier (TransferAttack baselines, Table 3) | 4/255 | ε/4 → **1/255** | per [TransferAttack](https://github.com/Trustworthy-AI-Group/TransferAttack) | — |
+| Purifier (**PGDTransfer**, Table 11) | 4/255 | **1/255** | **40** | **5** |
+| VQA (**PGDTransfer**, §6.5) | 4/255 | **1/255** | **100** | — |
 
 ## Install
 
@@ -22,183 +32,135 @@ VLM encoders: `configs/vlm_models.yaml` (`clip`, `fare`, `tecoa`, `simclip`).
 pip install -r requirements.txt
 ```
 
-**LVLM:** install [LLaVA](https://github.com/haotian-liu/LLaVA) (`pip install -e /path/to/LLaVA`) or set `LLAVA_ROOT`.
-
-Download pretrained weights (into `checkpoints/`; see [Checkpoints](#checkpoints)):
+**LVLM — LLaVA Python package** (weights are separate):
 
 ```bash
+git clone https://github.com/haotian-liu/LLaVA.git
+pip install -e /path/to/LLaVA
+# or: export LLAVA_ROOT=/path/to/LLaVA
+python -c "from llava.model.builder import load_pretrained_model"
+```
+
+**Checkpoints** (`checkpoints/`, gitignored):
+
+```bash
+bash scripts/download_guided_diffusion.sh
 bash scripts/vlm/download_llava_v1_5_weights.sh
 bash scripts/vlm/download_encoder_replace_weights.sh
-bash scripts/download_guided_diffusion.sh
 ```
-
-## Data
-
-Evaluation inputs live under **`data/`** at the repository root.
-
-```
-data/
-├── imagenet/                    # classification / purification (bundled)
-│   ├── clean-correct-500.zip
-│   └── *.png
-├── vqa/                         # LVLM / VQA
-│   ├── all_correct.ids          # bundled: clean-correct question ids
-│   ├── vqav2_val.jsonl          # from download script
-│   └── raw/                     # extracted VQA json (from download script)
-├── coco/val2014/                # from download script
-└── _downloads/                  # temp zips (from download script)
-```
-
-### ImageNet (classification & purification)
-
-Bundled **`data/imagenet/clean-correct-500.zip`** — **500** clean RGB PNGs on which all eight paper classifiers (Table 1) are correct. Extract once from the repo root:
-
-```bash
-unzip -q -o data/imagenet/clean-correct-500.zip -d data/imagenet
-mv data/imagenet/imagenet/*.png data/imagenet/
-rm -R data/imagenet/imagenet
-```
-
-Filenames use sequential index + ground-truth class id: `00000_305.png`, `00001_559.png`, … `00499_<class_id>.png`.
-
-- **Format:** RGB PNG; **224×224** recommended (matches classifier input in the attack scripts).
-- **Labels:** the suffix after `_` is the ground-truth class id (0–999), used for saving/eval.
-- Scripts load via `--input data/imagenet` with `--start_idx` / `--end_idx` (half-open range on the `00000`…`00499` indices).
-
-Example (full 500-image subset):
-
-```bash
-python scripts/classification/compute_advsm.py \
-  --data imagenet \
-  --model "ResNet-50" \
-  --model "ResNet-50 (Robust)" \
-  --input data/imagenet \
-  --out_dir outputs/advsm/classifiers \
-  --start_idx 0 --end_idx 500
-```
-
-**Classifiers** are pulled from [RobustBench](https://github.com/RobustBench/robustbench) on first use (Hugging Face / torch hub cache), not duplicated under `checkpoints/`.
-
-### VQAv2 + COCO val2014 (LVLM / VQA)
-
-VQA images and annotations are **not** bundled. From the repo root, run:
-
-```bash
-bash scripts/vlm/download_and_prepare_vqav2.sh
-```
-
-This downloads VQAv2 val questions/annotations and COCO val2014 images (~6 GB for images), then writes:
-
-| Path | Role |
-|------|------|
-| `data/vqa/vqav2_val.jsonl` | One JSON object per question (for eval / attacks) |
-| `data/vqa/raw/` | Extracted official VQA val JSON |
-| `data/coco/val2014/` | COCO images referenced by the jsonl |
-
-**`data/vqa/all_correct.ids`** (bundled) — one **VQAv2 `question_id`** per line (**1,108** ids). Val questions where all evaluated LVLM encoders are correct on clean inputs. Pass as `--subset-file data/vqa/all_correct.ids` (filters jsonl rows by `id`; `start_idx` / `end_idx` apply after filtering).
-
-**Options:**
-
-```bash
-bash scripts/vlm/download_and_prepare_vqav2.sh --data-root /path/to/data
-bash scripts/vlm/download_and_prepare_vqav2.sh --max-samples 5000
-bash scripts/vlm/download_and_prepare_vqav2.sh --skip-coco      # VQA zips + jsonl only (images already present)
-bash scripts/vlm/download_and_prepare_vqav2.sh --skip-download  # convert only (zips already extracted)
-```
-
-Requires `curl` or `wget`, `unzip`, and `python3`. Sources: [COCO](https://cocodataset.org/#download), [VQAv2](https://visualqa.org/download.html).
-
-After preparation, use `--data-jsonl`, `--image-root`, and optionally `--subset-file` (see [LVLM / VQA](#lvlm--vqa)).
-
-## Checkpoints
-
-All pretrained weights for this repo live under **`checkpoints/`** at the repository root.  
-Scripts download here by default; Python loaders resolve paths via `advsm._paths.checkpoint_path(...)`.
-
-### Layout
 
 ```
 checkpoints/
-├── llava-v1.5-7b/              # LLaVA-1.5-7B merged (CLIP backbone) — `bash scripts/vlm/download_llava_v1_5_weights.sh`
-├── encoder_replace/
-│   ├── fare/fare_eps_4.pt
-│   ├── tecoa/tecoa_eps_4.pt
-│   └── simclip/simclip4.pt     # `bash scripts/vlm/download_encoder_replace_weights.sh`
-├── guided_diffusion/
-│   └── imagenet/
-│       └── 256x256_diffusion_uncond.pt   # DiffPure / DDIM / DC / SSNI / MimicDiffusion / ContrastDiff
-└── score_sde/                  # optional, CIFAR-10 diffusion purifiers
-    └── cifar10/
-        └── checkpoint_35.pth
+├── llava-v1.5-7b/
+├── encoder_replace/{fare,tecoa,simclip}/
+└── guided_diffusion/imagenet/256x256_diffusion_uncond.pt
 ```
 
-ImageNet **classifiers** use RobustBench caches (see [Data](#data)). Keys are in `configs/classifiers.yaml`.
-
-### Diffusion weights
-
-```bash
-bash scripts/download_guided_diffusion.sh
-```
-
-Installs `checkpoints/guided_diffusion/imagenet/256x256_diffusion_uncond.pt` (OpenAI [guided-diffusion](https://github.com/openai/guided-diffusion) ImageNet unconditional model, used by DiffPure / DDIM and other purifiers in this repo).
-
-Optional env: `FORCE=1` to re-download; `IMAGENET_URL=...` to override the URL (see script header).
+Table 1 classifiers load via [RobustBench](https://github.com/RobustBench/robustbench) on first use.
 
 ## Classification
 
-**AdvSM** (example: two models):
+**Data:** NIPS 2017 adversarial-defense ImageNet subset — `data/imagenet/clean-correct-500.zip` (500 images, all Table 1 models correct on clean). Unzip to `data/imagenet/NNNNN_<class_id>.png` (224×224 RGB).
+
+```bash
+unzip -q -o data/imagenet/clean-correct-500.zip -d data/imagenet
+mv data/imagenet/imagenet/*.png data/imagenet/ && rmdir data/imagenet/imagenet
+```
+
+**Models (Table 1):** ResNet-50, ConvNeXt-B, ViT-B, Swin-B + four RobustBench robust counterparts (`configs/classifiers.yaml`).
+
+**AdvSM (§6.1):** gradient threshold **10⁻⁵**, **100** samples:
 
 ```bash
 python scripts/classification/compute_advsm.py \
   --data imagenet \
-  --model "ResNet-50" \
-  --model "ResNet-50 (Robust)" \
-  --input data/imagenet \
-  --out_dir outputs/advsm/classifiers \
-  --start_idx 0 --end_idx 500
+  --model "ResNet-50" --model "ResNet-50 (Robust)" \
+  --input data/imagenet --out_dir outputs/advsm/classifiers \
+  --start_idx 0 --end_idx 100
 ```
 
-**PGD attack** (`--model` must be one of the eight keys in `configs/classifiers.yaml`):
+**Attack / eval (500 samples):** untargeted **ℓ∞ ε = 4/255**, **10** PGD steps (`attack_pgd.py` defaults). Table 3 transferable attacks: [TransferAttack](https://github.com/Trustworthy-AI-Group/TransferAttack).
 
 ```bash
 python scripts/classification/attack_pgd.py \
   --model "ViT-B (Robust)" \
-  --eps 4 \
-  --input data/imagenet \
-  --output outputs/attacks/vitb_robust_pgd \
+  --eps 4 --max_iter 10 \
+  --input data/imagenet --output outputs/attacks/vitb_robust_pgd \
+  --start_idx 0 --end_idx 500
+
+python scripts/classification/eval_accuracy.py \
+  --target "ViT-B (Robust)" \
+  --input outputs/attacks/vitb_robust_pgd \
+  --start_idx 0 --end_idx 500
+```
+
+## Purification
+
+**Data:** same 500-image `data/imagenet/` subset.
+
+**Pipeline (§6.1):** fixed downstream classifier **non-robust ResNet-50**; vary purifier. **PGDTransfer** uses **DDIM** surrogate (Table 5: `timesteps=150`, `denoise_steps=3`). Table 11: ε = 4/255, T = 40, K = 5.
+
+**Table 5 — purifier settings (target purifiers):**
+
+| Purifier | Key settings |
+|----------|----------------|
+| Mean | `kernel=5` |
+| Gaussian | `noise std=0.015`, `kernel=5`, `sigma=1.5` |
+| JPEG | `quality=20%` |
+| DiffPure | `timesteps=150` |
+| MimicDiffusion | `timesteps=1000`, `denoise_steps=100` |
+| ContrastDiff | `timesteps=150`, `sample_steps=1` |
+| SSNI | `timesteps=150`, `denoise_steps=150` |
+| DCDefense | `timesteps=150`, `forward_noise_steps=1`, `strength_l=0.2`, `strength_s=0.1` |
+| DDIM (surrogate) | `timesteps=150`, `denoise_steps=3` |
+
+**AdvSM (§6.1):** random-sign probes, **ε = 16/255**, response threshold **θ = 2/255**, **M = 5**, **N = 10** (defaults in `compute_advsm.py`), **100** samples.
+
+**Attack** (prints clean / robust accuracy):
+
+```bash
+python scripts/purification/attack_pgd_transfer.py \
+  --data imagenet \
+  --target "ResNet-50" \
+  --defense DDIM \
+  --d_settings data imagenet timesteps 150 denoise_steps 3 \
+  --attack PGDTransfer \
+  --eps 4 --max_iter 40 --eot_iter 5 \
+  --input data/imagenet --output outputs/attacks/pgdtransfer_ddim \
   --start_idx 0 --end_idx 500
 ```
 
 **Eval:**
 
 ```bash
-python scripts/classification/eval_accuracy.py \
-  --target "ViT-B (Robust)" \
-  --input outputs/attacks/vitb_robust_pgd
-```
-
-## Purification
-
-Seven attacks: `PGD`, `BPDA_EOT`, `DiffPGD`, `DiffAttack`, `DiffHammer`, `DiffBreak`, `PGDTransfer`.
-
-```bash
-python scripts/purification/attack_pgd_transfer.py \
-  --data imagenet \
-  --target Hendrycks2020AugMix_ResNeXt \
+python scripts/purification/eval_accuracy.py \
+  --data imagenet --target "ResNet-50" \
   --defense DDIM \
-  --d_settings data imagenet timesteps 150 denoise_steps 10 \
-  --attack PGDTransfer \
-  --eps 4 --max_iter 40 --eot_iter 5 \
-  --input data/imagenet \
-  --output outputs/attacks/pgdtransfer \
-  --start_idx 0 --end_idx 500
+  --d_settings data imagenet timesteps 150 denoise_steps 3 \
+  --input data/imagenet --start_idx 0 --end_idx 500
+
+python scripts/purification/eval_accuracy.py \
+  --data imagenet --target "ResNet-50" \
+  --defense DDIM \
+  --d_settings data imagenet timesteps 150 denoise_steps 3 \
+  --input outputs/attacks/pgdtransfer_ddim --start_idx 0 --end_idx 500
 ```
 
 ## LVLM / VQA
 
-Prepare data first: `bash scripts/vlm/download_and_prepare_vqav2.sh` (see [Data](#data)). Use `data/vqa/all_correct.ids` as the clean-correct question subset.
+**Data:** VQAv2 val + COCO val2014:
 
-**Attack:**
+```bash
+bash scripts/vlm/download_and_prepare_vqav2.sh
+```
+
+→ `data/vqa/vqav2_val.jsonl`, `data/coco/val2014/`. Bundled **`data/vqa/all_correct.ids`** lists clean-correct **question_id**s (use with `--subset-file`; take **500** rows via `--end_idx 500` per §6.1).
+
+**Models (§6.5):** LLaVA-1.5-7B + shared projector; encoders **CLIP ViT-L/14** (non-robust) and **FARE / TeCoA / SimCLIP** (robust, Table 1). **PGDTransfer:** ε = 4/255, α = 1/255, **T = 100**, untargeted; surrogate **fare** for transfer experiments (Table 13).
+
+**AdvSM:** threshold **10⁻⁵**, **100** samples (`--end_idx 100`).
+
+**Attack (500 questions):**
 
 ```bash
 python scripts/vlm/attack_pgd_transfer.py \
@@ -208,20 +170,30 @@ python scripts/vlm/attack_pgd_transfer.py \
   --image-root data/coco/val2014 \
   --subset-file data/vqa/all_correct.ids \
   --output-dir outputs/attacks/vlm_fare \
-  --eps 4/255 --steps 40 --batch-size 1
+  --eps 4/255 --alpha 1/255 --steps 100 --batch-size 1 \
+  --start-idx 0 --end-idx 500
 ```
 
-**Eval:**
+**Eval** (`eval_vqa.py` — clean vs adversarial via `--adv`):
 
 ```bash
-python scripts/vlm/eval_clean.py \
-  --models fare tecoa simclip \
-  --adv \
+python scripts/vlm/eval_vqa.py \
+  --models clip fare tecoa simclip \
+  --models-config configs/vlm_models.yaml \
+  --data-jsonl data/vqa/vqav2_val.jsonl \
+  --image-root data/coco/val2014 \
+  --subset-file data/vqa/all_correct.ids \
+  --start-idx 0 --end-idx 500 \
+  --output outputs/vqa_results.csv
+
+python scripts/vlm/eval_vqa.py \
+  --models clip fare tecoa simclip --adv \
   --models-config configs/vlm_models.yaml \
   --data-jsonl data/vqa/vqav2_val.jsonl \
   --image-root outputs/attacks/vlm_fare/adv_images \
   --subset-file data/vqa/all_correct.ids \
-  --output outputs/eval_adv.csv
+  --start-idx 0 --end-idx 500 \
+  --output outputs/vqa_results_adv.csv
 ```
 
 ## Repository layout
@@ -229,18 +201,8 @@ python scripts/vlm/eval_clean.py \
 ```
 advsm/              # Python package
 configs/            # classifiers.yaml, vlm_models.yaml
-data/               # imagenet/; vqa/ (+ coco/ from download script)
-scripts/            # CLIs
-third_party/        # DC, SSNI, MimicDiffusion, ContrastDiffPurification, DiffAttack, DiffHammer, DiffBreak
-checkpoints/        # all local weights (gitignored blobs)
-```
-
-## Citation
-
-```bibtex
-@inproceedings{advsm2026,
-  title={Adversarial Robustness Optimization Increases Attack Transferability and Weakens Defense Isolation},
-  booktitle={IEEE Symposium on Security and Privacy},
-  year={2026}
-}
+data/               # imagenet/, vqa/, coco/
+scripts/            # CLIs per setting
+third_party/        # purifier / attack baselines
+checkpoints/        # downloaded weights
 ```

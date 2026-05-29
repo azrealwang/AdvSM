@@ -43,7 +43,7 @@ def parse_args_and_config():
         help="PGD, BPDA_EOT, DiffPGD, DiffAttack, DiffHammer, DiffBreak, PGDTransfer",
     )
     parser.add_argument("--norm", type=str, default="Linf")
-    parser.add_argument("--eps", type=float, default=4)
+    parser.add_argument("--eps", type=float, default=4, help="Linf ε in 1/255 units (default 4 → 4/255)")
     parser.add_argument("--max_iter", type=int, default=40)
     parser.add_argument("--eot_iter", type=int, default=5)
     parser.add_argument("--n_eval", type=int, default=3, help="DiffHammer N_EVAL")

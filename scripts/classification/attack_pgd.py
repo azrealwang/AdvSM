@@ -24,8 +24,8 @@ from art.estimators.classification import PyTorchClassifier
 def parse_args():
     p = argparse.ArgumentParser(description="PGD attack on ImageNet classifiers.")
     p.add_argument("--model", type=str, required=True, choices=_PAPER_MODEL_KEYS)
-    p.add_argument("--eps", type=float, default=4, help="Linf budget in 1/255 units")
-    p.add_argument("--max_iter", type=int, default=40)
+    p.add_argument("--eps", type=float, default=4, help="Linf budget ε in 1/255 units (default 4 → 4/255)")
+    p.add_argument("--max_iter", type=int, default=10, help="PGD iterations (default 10)")
     p.add_argument("--batch_size", type=int, default=1)
     p.add_argument("--input", type=str, required=True)
     p.add_argument("--output", type=str, required=True)
