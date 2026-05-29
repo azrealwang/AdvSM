@@ -1,30 +1,19 @@
-# AdvSM
+# Adversarial Robustness Optimization Increases Attack Transferability and Weakens Defense Isolation
 
-Code for **Adversarial Robustness Optimization Increases Attack Transferability and Weakens Defense Isolation** (IEEE S&P 2026).
-
-- **AdvSM** (Adversarial Sensitivity Maps): quantify alignment among robustness-optimized defenses.
+- **AdvSMs** (Adversarial Sensitivity Maps): quantify alignment among robustness-optimized defenses.
 - **PGDTransfer**: PGD + EOT + DDIM-surrogate adaptive attack for transfer across defenses in the same family.
 
-**Paper settings** below follow §6.1 and Tables 5–6 of the submission PDF (*Rethinking Transferability* draft). Primary attack protocol: **untargeted**, **ℓ∞ ε = 4/255**. **500** clean-correct samples per attack/eval run; **100** for AdvSM maps.
+Primary attack protocol: **untargeted**, **ℓ∞ ε = 4/255**. **500** clean-correct samples per attack/eval run; **100** for AdvSM maps.
 
 ## Supported systems
 
 | Setting | Models (paper) | AdvSM | Attack | Eval |
 |--------|----------------|-------|--------|------|
-| **Classification** | 8 ImageNet classifiers (Table 1) | `scripts/classification/compute_advsm.py` | `scripts/classification/attack_pgd.py` | `scripts/classification/eval_accuracy.py` |
-| **Purification** | 9 purifiers + ResNet-50 (Tables 2, 5, 11) | `scripts/purification/compute_advsm.py` | `scripts/purification/attack_pgd_transfer.py` | `scripts/purification/eval_accuracy.py` |
-| **LVLM / VQA** | CLIP + FARE / TeCoA / SimCLIP (Table 1, §6.5) | `scripts/vlm/compute_advsm.py` | `scripts/vlm/attack_pgd_transfer.py` | `scripts/vlm/eval_vqa.py` |
+| **Classification** | 8 ImageNet classifiers | `scripts/classification/compute_advsm.py` | `scripts/classification/attack_pgd.py` | `scripts/classification/eval_accuracy.py` |
+| **Purification** | 9 purifiers + ResNet-50 | `scripts/purification/compute_advsm.py` | `scripts/purification/attack_pgd_transfer.py` | `scripts/purification/eval_accuracy.py` |
+| **LVLM / VQA** | CLIP / FARE / TeCoA / SimCLIP + LLaVA-v1.5-7B | `scripts/vlm/compute_advsm.py` | `scripts/vlm/attack_pgd_transfer.py` | `scripts/vlm/eval_vqa.py` |
 
-Configs: `configs/classifiers.yaml` (Table 1), `configs/vlm_models.yaml` (`clip`, `fare`, `tecoa`, `simclip`).
-
-### Table 6 — attack hyperparameters (ε = 4/255)
-
-| Setting | ε | step α | iterations T | EOT K |
-|--------|---|--------|--------------|-------|
-| Classifier (`attack_pgd.py`, untargeted) | 4/255 | ε/4 → **1/255** | **10** | — |
-| Classifier (TransferAttack baselines, Table 3) | 4/255 | ε/4 → **1/255** | per [TransferAttack](https://github.com/Trustworthy-AI-Group/TransferAttack) | — |
-| Purifier (**PGDTransfer**, Table 11) | 4/255 | **1/255** | **40** | **5** |
-| VQA (**PGDTransfer**, §6.5) | 4/255 | **1/255** | **100** | — |
+Configs: `configs/classifiers.yaml`, `configs/vlm_models.yaml` (`clip`, `fare`, `tecoa`, `simclip`).
 
 ## Install
 
@@ -56,20 +45,20 @@ checkpoints/
 └── guided_diffusion/imagenet/256x256_diffusion_uncond.pt
 ```
 
-Table 1 classifiers load via [RobustBench](https://github.com/RobustBench/robustbench) on first use.
+Robust classifiers load via [RobustBench](https://github.com/RobustBench/robustbench) on first use.
 
 ## Classification
 
-**Data:** NIPS 2017 adversarial-defense ImageNet subset — `data/imagenet/clean-correct-500.zip` (500 images, all Table 1 models correct on clean). Unzip to `data/imagenet/NNNNN_<class_id>.png` (224×224 RGB).
+**Data:** NIPS 2017 adversarial-defense ImageNet subset — `data/imagenet/clean-correct-500.zip` (500 images). Unzip to `data/imagenet/NNNNN_<class_id>.png` (224×224 RGB).
 
 ```bash
 unzip -q -o data/imagenet/clean-correct-500.zip -d data/imagenet
-mv data/imagenet/imagenet/*.png data/imagenet/ && rmdir data/imagenet/imagenet
+mv data/imagenet/imagenet/*.png data/imagenet/ && rm -R data/imagenet/imagenet
 ```
 
-**Models (Table 1):** ResNet-50, ConvNeXt-B, ViT-B, Swin-B + four RobustBench robust counterparts (`configs/classifiers.yaml`).
+**Models** ResNet-50, ConvNeXt-B, ViT-B, Swin-B + four RobustBench robust counterparts (`configs/classifiers.yaml`).
 
-**AdvSM (§6.1):** gradient threshold **10⁻⁵**, **100** samples:
+**AdvSM:** gradient threshold **10⁻⁵**, **100** samples:
 
 ```bash
 python scripts/classification/compute_advsm.py \
@@ -79,7 +68,7 @@ python scripts/classification/compute_advsm.py \
   --start_idx 0 --end_idx 100
 ```
 
-**Attack / eval (500 samples):** untargeted **ℓ∞ ε = 4/255**, **10** PGD steps (`attack_pgd.py` defaults). Table 3 transferable attacks: [TransferAttack](https://github.com/Trustworthy-AI-Group/TransferAttack).
+**Attack / eval (500 samples):** untargeted **ℓ∞ ε = 4/255**, **10** PGD steps (`attack_pgd.py` defaults).
 
 ```bash
 python scripts/classification/attack_pgd.py \
@@ -98,9 +87,9 @@ python scripts/classification/eval_accuracy.py \
 
 **Data:** same 500-image `data/imagenet/` subset.
 
-**Pipeline (§6.1):** fixed downstream classifier **non-robust ResNet-50**; vary purifier. **PGDTransfer** uses **DDIM** surrogate (Table 5: `timesteps=150`, `denoise_steps=3`). Table 11: ε = 4/255, T = 40, K = 5.
+**Pipeline:** fixed downstream classifier **non-robust ResNet-50**; vary purifier. **PGDTransfer** uses **DDIM** surrogate (`timesteps=150`, `denoise_steps=3`). ε = 4/255, T = 40, K = 5.
 
-**Table 5 — purifier settings (target purifiers):**
+**Purifier settings (target purifiers):**
 
 | Purifier | Key settings |
 |----------|----------------|
@@ -114,7 +103,7 @@ python scripts/classification/eval_accuracy.py \
 | DCDefense | `timesteps=150`, `forward_noise_steps=1`, `strength_l=0.2`, `strength_s=0.1` |
 | DDIM (surrogate) | `timesteps=150`, `denoise_steps=3` |
 
-**AdvSM (§6.1):** random-sign probes, **ε = 16/255**, response threshold **θ = 2/255**, **M = 5**, **N = 10** (defaults in `compute_advsm.py`), **100** samples.
+**AdvSM:** random-sign probes, **ε = 16/255**, response threshold **θ = 2/255**, **M = 5**, **N = 10** (defaults in `compute_advsm.py`), **100** samples.
 
 **Attack** (prints clean / robust accuracy):
 
@@ -154,9 +143,9 @@ python scripts/purification/eval_accuracy.py \
 bash scripts/vlm/download_and_prepare_vqav2.sh
 ```
 
-→ `data/vqa/vqav2_val.jsonl`, `data/coco/val2014/`. Bundled **`data/vqa/all_correct.ids`** lists clean-correct **question_id**s (use with `--subset-file`; take **500** rows via `--end_idx 500` per §6.1).
+→ `data/vqa/vqav2_val.jsonl`, `data/coco/val2014/`. Bundled **`data/vqa/all_correct.ids`** lists clean-correct **question_id**s (use with `--subset-file`; take **500** rows via `--end_idx 500`).
 
-**Models (§6.5):** LLaVA-1.5-7B + shared projector; encoders **CLIP ViT-L/14** (non-robust) and **FARE / TeCoA / SimCLIP** (robust, Table 1). **PGDTransfer:** ε = 4/255, α = 1/255, **T = 100**, untargeted; surrogate **fare** for transfer experiments (Table 13).
+**Models:** LLaVA-1.5-7B + shared projector; encoders **CLIP ViT-L/14** (non-robust) and **FARE / TeCoA / SimCLIP** (robust, Table 1). **PGDTransfer:** ε = 4/255, α = 1/255, **T = 100**, untargeted.
 
 **AdvSM:** threshold **10⁻⁵**, **100** samples (`--end_idx 100`).
 
