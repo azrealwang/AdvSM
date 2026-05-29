@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
-import os, sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-import _path  # noqa: F401
+import os
+import sys
+
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from advsm._paths import ensure_repo_on_path, ensure_third_party_on_path
+
+ensure_repo_on_path()
+ensure_third_party_on_path()
 
 """
 Defense mask label maps and cross-defense cosine similarity.
