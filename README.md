@@ -103,7 +103,17 @@ python scripts/classification/eval_accuracy.py \
 | DCDefense | `timesteps=150`, `forward_noise_steps=1`, `strength_l=0.2`, `strength_s=0.1` |
 | DDIM (surrogate) | `timesteps=150`, `denoise_steps=3` |
 
-**AdvSM:** random-sign probes, **ε = 16/255**, response threshold **θ = 2/255**, **M = 5**, **N = 10** (defaults in `compute_advsm.py`), **100** samples.
+**AdvSM:** random-sign probes, **ε = 16/255**, response threshold **θ = 2/255**, **M = 5**, **N = 10** (defaults in `compute_advsm.py`), **100** samples:
+
+```bash
+python scripts/purification/compute_advsm.py \
+  --input data/imagenet \
+  --start_idx 0 --end_idx 100 \
+  --def "DiffPure data=imagenet timesteps=150" \
+  --def "DDIM data=imagenet timesteps=150 denoise_steps=3" \
+  --eps 16 --thres 2 --M 5 --N 10 \
+  --out_dir outputs/advsm/purifiers
+```
 
 **Attack** (prints clean / robust accuracy):
 
@@ -143,11 +153,24 @@ python scripts/purification/eval_accuracy.py \
 bash scripts/vlm/download_and_prepare_vqav2.sh
 ```
 
-→ `data/vqa/vqav2_val.jsonl`, `data/coco/val2014/`. Bundled **`data/vqa/all_correct.ids`** lists clean-correct **question_id**s (use with `--subset-file`; take **500** rows via `--end_idx 500`).
+→ `data/vqa/vqav2_val.jsonl`, `data/coco/val2014/`. Bundled **`data/vqa/all_correct.ids`** lists clean-correct **question_id**s (use with `--subset-file`; take **500** rows via `--end-idx 500`).
 
-**Models:** LLaVA-1.5-7B + shared projector; encoders **CLIP ViT-L/14** (non-robust) and **FARE / TeCoA / SimCLIP** (robust, Table 1). **PGDTransfer:** ε = 4/255, α = 1/255, **T = 100**, untargeted.
+**Models:** LLaVA-1.5-7B + shared projector; encoders **CLIP ViT-L/14** (non-robust) and **FARE / TeCoA / SimCLIP** (robust). **PGDTransfer:** ε = 4/255, α = 1/255, **T = 100**, untargeted.
 
-**AdvSM:** threshold **10⁻⁵**, **100** samples (`--end_idx 100`).
+**AdvSM:** threshold **10⁻⁵**, **100** samples (`--end-idx 100`):
+
+```bash
+python scripts/vlm/compute_advsm.py \
+  --models clip fare tecoa simclip \
+  --models-config configs/vlm_models.yaml \
+  --data-jsonl data/vqa/vqav2_val.jsonl \
+  --image-root data/coco/val2014 \
+  --subset-file data/vqa/all_correct.ids \
+  --out-dir outputs/advsm/vlm \
+  --start-idx 0 --end-idx 100 \
+  --batch-size 1 \
+  --threshold 1e-5
+```
 
 **Attack (500 questions):**
 
