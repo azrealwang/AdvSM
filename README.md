@@ -3,7 +3,7 @@
 - **AdvSMs** (Adversarial Sensitivity Maps): quantify alignment among robustness-optimized defenses.
 - **PGDTransfer**: PGD + EOT + DDIM-surrogate adaptive attack for transfer across defenses in the same family.
 
-Primary attack protocol: **untargeted**, **ℓ∞ ε = 4/255**. **500** clean-correct samples per attack/eval run; **100** for AdvSM maps.
+**Primary attack protocol:** untargeted, ℓ∞ ε = 4/255. 500 clean-correct samples per attack/eval run; 100 for AdvSM maps.
 
 ## Supported systems
 
@@ -58,7 +58,7 @@ mv data/imagenet/imagenet/*.png data/imagenet/ && rm -R data/imagenet/imagenet
 
 **Models** ResNet-50, ConvNeXt-B, ViT-B, Swin-B + four RobustBench robust counterparts (`configs/classifiers.yaml`).
 
-**AdvSM:** gradient threshold **10⁻⁵**, **100** samples:
+**AdvSM:** gradient threshold 10⁻⁵, 100 samples:
 
 ```bash
 python scripts/classification/compute_advsm.py \
@@ -68,7 +68,7 @@ python scripts/classification/compute_advsm.py \
   --start_idx 0 --end_idx 100
 ```
 
-**Attack / eval (500 samples):** untargeted **ℓ∞ ε = 4/255**, **10** PGD steps (`attack_pgd.py` defaults).
+**Attack / eval (500 samples):** untargeted ℓ∞ ε = 4/255, 10 PGD steps (`attack_pgd.py` defaults).
 
 ```bash
 python scripts/classification/attack_pgd.py \
@@ -87,7 +87,7 @@ python scripts/classification/eval_accuracy.py \
 
 **Data:** same 500-image `data/imagenet/` subset.
 
-**Pipeline:** fixed downstream classifier **non-robust ResNet-50**; vary purifier. **PGDTransfer** uses **DDIM** surrogate (`timesteps=150`, `denoise_steps=3`). ε = 4/255, T = 40, K = 5.
+**Pipeline:** fixed downstream classifier non-robust ResNet-50; vary purifier. **PGDTransfer** uses **DDIM** surrogate (`timesteps=150`, `denoise_steps=3`); ε = 4/255, T = 40, K = 5.
 
 **Purifier settings (target purifiers):**
 
@@ -103,7 +103,7 @@ python scripts/classification/eval_accuracy.py \
 | DCDefense | `timesteps=150`, `forward_noise_steps=1`, `strength_l=0.2`, `strength_s=0.1` |
 | DDIM (surrogate) | `timesteps=150`, `denoise_steps=3` |
 
-**AdvSM:** random-sign probes, **ε = 16/255**, response threshold **θ = 2/255**, **M = 5**, **N = 10** (defaults in `compute_advsm.py`), **100** samples:
+**AdvSM:** random-sign probes, ε = 16/255, response threshold θ = 2/255, M = 5, N = 10 (defaults in `compute_advsm.py`), 100 samples:
 
 ```bash
 python scripts/purification/compute_advsm.py \
@@ -153,11 +153,11 @@ python scripts/purification/eval_accuracy.py \
 bash scripts/vlm/download_and_prepare_vqav2.sh
 ```
 
-→ `data/vqa/vqav2_val.jsonl`, `data/coco/val2014/`. Bundled **`data/vqa/all_correct.ids`** lists clean-correct **question_id**s (use with `--subset-file`; take **500** rows via `--end-idx 500`).
+→ `data/vqa/vqav2_val.jsonl`, `data/coco/val2014/`. Bundled **`data/vqa/all_correct.ids`** lists clean-correct **question_id**s (use with `--subset-file`; take 500 rows via `--end-idx 500`).
 
-**Models:** LLaVA-1.5-7B + shared projector; encoders **CLIP ViT-L/14** (non-robust) and **FARE / TeCoA / SimCLIP** (robust). **PGDTransfer:** ε = 4/255, α = 1/255, **T = 100**, untargeted.
+**Models:** LLaVA-1.5-7B + shared projector; **encoders** CLIP ViT-L/14 (non-robust) and FARE / TeCoA / SimCLIP (robust). **PGDTransfer:** ε = 4/255, α = 1/255, T = 100, untargeted.
 
-**AdvSM:** threshold **10⁻⁵**, **100** samples (`--end-idx 100`):
+**AdvSM:** threshold 10⁻⁵, 100 samples (`--end-idx 100`):
 
 ```bash
 python scripts/vlm/compute_advsm.py \
