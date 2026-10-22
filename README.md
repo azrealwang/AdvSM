@@ -1,5 +1,7 @@
 # Adversarial Robustness Optimization Increases Attack Transferability and Weakens Defense Isolation
 
+[PDF](https://arxiv.org/pdf/2607.18339)
+
 - **AdvSMs** (Adversarial Sensitivity Maps): quantify alignment among robustness-optimized defenses.
 - **PGDTransfer**: PGD + EOT + DDIM-surrogate adaptive attack for transfer across defenses in the same family.
 
@@ -244,3 +246,17 @@ checkpoints/        # downloaded weights (LLaVA, diffusion, robust encoders; see
 models/             # RobustBench robust classifier checkpoints (auto-download on first use)
 outputs/            # AdvSM matrices/maps, adversarial images, eval CSVs
 ```
+## Citation
+```
+@article{wang2026shared,
+  title={Shared Vulnerabilities in Robustness-Optimized Defenses: One Breach Exposes the Family},
+  author={Wang, Hanrui and Zheng, Ruihao and Wang, Shuo and Echizen, Isao and Dong, Xingbo and Jin, Zhe},
+  journal={arXiv preprint arXiv:2607.18339},
+  year={2026}
+}
+```
+
+## Contact
+If you have any questions about our work, please do not hesitate to contact us by email.
+
+Hanrui Wang: hanrui_wang@nii.ac.jp
